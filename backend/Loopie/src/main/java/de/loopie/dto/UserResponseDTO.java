@@ -4,6 +4,9 @@ import de.loopie.entity.User;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/**
+ * Data Transfer Object representing user account details exposed to clients.
+ */
 public class UserResponseDTO {
     private UUID id;
     private String publicId;

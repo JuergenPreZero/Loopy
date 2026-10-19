@@ -39,24 +39,48 @@ public class LoopieController {
         return ResponseEntity.ok(loopieService.getTotalQuantity(userId));
     }
 
+    /**
+     * Retrieves the current ReCoins balance for a specific user.
+     *
+     * @param userId the unique identifier of the user
+     * @return HTTP 200 OK with the user's current balance
+     */
     @GetMapping("/balance/{userId}")
     public ResponseEntity<Integer> getBalance(@PathVariable UUID userId) {
         User user = loopieService.getUserById(userId);
         return ResponseEntity.ok(user.getBalance());
     }
 
+    /**
+     * Retrieves the user profile details by user ID.
+     *
+     * @param userId the unique identifier of the user
+     * @return HTTP 200 OK with the {@link UserResponseDTO}
+     */
     @GetMapping("/user/{userId}")
     public ResponseEntity<UserResponseDTO> getUser(@PathVariable UUID userId) {
         User user = loopieService.getUserById(userId);
         return ResponseEntity.ok(new UserResponseDTO(user));
     }
 
+    /**
+     * Deletes a user account by user ID.
+     *
+     * @param userId the unique identifier of the user to delete
+     * @return HTTP 204 No Content upon successful deletion
+     */
     @DeleteMapping("/user/{userId}")
     public ResponseEntity<UserResponseDTO> deleteUser(@PathVariable UUID userId) {
         loopieService.deleteUserById(userId);
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Retrieves the transaction history for a specific user, ordered by timestamp descending.
+     *
+     * @param userId the unique identifier of the user
+     * @return HTTP 200 OK with a list of {@link Transaction} entities
+     */
     @GetMapping("/user/{userId}/transactions")
     public ResponseEntity<List<Transaction>> getUserTransactions(@PathVariable UUID userId) {
         return ResponseEntity.ok(transactionRepository.findByUser_IdOrderByTimeStampDesc(userId));
@@ -74,6 +98,13 @@ public class LoopieController {
         return ResponseEntity.ok(savedTransaction);
     }
 
+    /**
+     * Updates an existing user's profile information.
+     *
+     * @param userId the unique identifier of the user to update
+     * @param request data transfer object containing the updated user fields
+     * @return HTTP 200 OK with the updated {@link UserResponseDTO}, or HTTP 400 Bad Request on failure
+     */
     @PutMapping("/user/{userId}")
     public ResponseEntity<?> updateUserProfile(
             @PathVariable UUID userId,

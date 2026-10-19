@@ -8,15 +8,28 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Zentral Security config for Loopie.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    /**
+     * Encodes the Password set by USER.
+     * @return a {@link BCryptPasswordEncoder} instance used for encoding and verifying passwords
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Defines the security filterchain.
+     * @param http the {@link HttpSecurity} object to configure web-based security rules
+     * @return the built {@link SecurityFilterChain} instance used by Spring Security
+     * @throws Exception if an error occurs while constructing the filter chain
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http

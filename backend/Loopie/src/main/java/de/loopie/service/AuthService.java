@@ -12,11 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.util.Locale;
 
+/**
+ * Service managing user authentication, registration, and credential verification.
+ */
 @Service
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    //Character pool for generating public IDs
     private static final String CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final int PUBLIC_ID_LENGTH = 8;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -26,6 +30,12 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * Registers a new user account with normalized email, encrypted password, and a unique 8-character public ID.
+     *
+     * @param request data transfer object containing registration details
+     * @return the newly created user as a {@link UserResponseDTO}
+     */
     @Transactional
     public UserResponseDTO registerUser(RegisterRequest request) {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
@@ -54,6 +64,12 @@ public class AuthService {
         return new UserResponseDTO(savedUser);
     }
 
+    /**
+     * Authenticates an existing user against stored credentials.
+     *
+     * @param request data transfer object containing login email and raw password
+     * @return the authenticated user as a {@link UserResponseDTO}
+     */
     public UserResponseDTO login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail().trim().toLowerCase(Locale.ROOT))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid E-Mail or Password."));

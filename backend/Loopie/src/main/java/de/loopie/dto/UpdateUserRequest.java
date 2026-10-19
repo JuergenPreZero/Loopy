@@ -1,5 +1,8 @@
 package de.loopie.dto;
 
+/**
+ * Data Transfer Object representing a user profile update request.
+ */
 public class UpdateUserRequest {
     private String firstName;
     private String lastName;

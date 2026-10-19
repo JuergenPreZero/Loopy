@@ -1,5 +1,8 @@
 package de.loopie.dto;
 
+/**
+ * Data Transfer Object representing a user registration request.
+ */
 public class RegisterRequest {
     private String firstName;
     private String lastName;

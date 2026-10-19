@@ -15,6 +15,7 @@ import de.loopie.dto.UpdateUserRequest;
 import de.loopie.dto.UserResponseDTO;
 import java.util.Locale;
 import java.util.Optional;
+
 /**
  * Main Service for Loopie, handles transactional logic.
  */
@@ -23,6 +24,9 @@ public class LoopieService {
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
 
+    /**
+     * Valuation mapping defining ReCoin rewards for each supported item type.
+     */
     private static final Map<String, Integer> unitPrices = Map.of(
             "Tennis Ball",20,
             "Laufschuhe",50,
@@ -45,11 +49,22 @@ public class LoopieService {
         return total != null ? total : 0;
     }
 
+    /**
+     * Retrieves a user entity by internal user ID.
+     *
+     * @param userId the unique identifier of the user
+     * @return the {@link User} entity
+     */
     public User getUserById(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User "+ userId + " not found"));
     }
 
+    /**
+     * Deletes a user account and associated record by user ID.
+     *
+     * @param userId the unique identifier of the user to delete
+     */
     public void deleteUserById(UUID userId) {
         userRepository.deleteById(userId);
     }
@@ -87,6 +102,14 @@ public class LoopieService {
         return savedTransaction;
     }
 
+    /**
+     * Processes an incoming recycling throw-in event triggered by an IoT station.
+     * Validates user identity and item type, computes total ReCoins earned, records
+     * the transaction, and recalculates the user's materialized balance on write.
+     *
+     * @param request data transfer object containing the IoT throw-in event details
+     * @return the persisted {@link Transaction} entity
+     */
     @Transactional
     public UserResponseDTO updateUserProfile(UUID userId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)

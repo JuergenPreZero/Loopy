@@ -1,5 +1,8 @@
 package de.loopie.dto;
 
+/**
+ * Data Transfer Object representing a user login request.
+ */
 public class LoginRequest {
     private String email;
     private String password;
