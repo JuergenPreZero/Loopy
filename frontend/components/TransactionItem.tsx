@@ -2,13 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 export interface TransactionProps {
-  itemType: String;
+  itemType: string;
   amount: number;
   value: number;
   date?: string;
 }
 
 export default function TransactionItem({ itemType, amount, value, date }: TransactionProps) {
+  const isPositive = value >= 0;
+
   const formatShortDate = (rawDate?: string) => {
     if (!rawDate) return null;
     try {
@@ -37,12 +39,16 @@ export default function TransactionItem({ itemType, amount, value, date }: Trans
     <View style={styles.card}>
       <View style={styles.leftCol}>
         <Text style={styles.itemName}>{itemType}</Text>
-        <Text style={styles.itemAmount}>{amount} Stück abgegeben</Text>
+        <Text style={styles.itemAmount}>
+          {isPositive ? `${amount} Stück abgegeben` : `${amount}x Prämie eingelöst`}
+        </Text>
         {date ? <Text style={styles.itemDate}>{formatShortDate(date)}</Text> : null}
       </View>
 
       <View style={styles.rightCol}>
-        <Text style={styles.totalValue}>+{value} ReCoins</Text>
+        <Text style={[styles.totalValue, isPositive ? styles.positiveValue : styles.negativeValue]}>
+          {isPositive ? `+${value}` : value} ReCoins
+        </Text>
       </View>
     </View>
   );
@@ -90,6 +96,11 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: 17,
     fontWeight: '700',
+  },
+  positiveValue: {
     color: '#16A34A',
+  },
+  negativeValue: {
+    color: '#DC2626',
   },
 });

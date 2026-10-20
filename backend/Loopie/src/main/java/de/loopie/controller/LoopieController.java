@@ -1,5 +1,6 @@
 package de.loopie.controller;
 
+import de.loopie.dto.RedeemRequest;
 import de.loopie.dto.ThrowInRequest;
 import de.loopie.dto.UpdateUserRequest;
 import de.loopie.dto.UserResponseDTO;
@@ -96,6 +97,22 @@ public class LoopieController {
     public ResponseEntity<Transaction> registerThrowIn(@RequestBody ThrowInRequest request) {
         Transaction savedTransaction = loopieService.processThrowIn(request);
         return ResponseEntity.ok(savedTransaction);
+    }
+
+    /**
+     * Endpoint for redeeming rewards using ReCoins.
+     *
+     * @param request data transfer object containing redemption details
+     * @return HTTP 200 OK with {@link Transaction} or HTTP 400 Bad Request on failure
+     */
+    @PostMapping("/redeem")
+    public ResponseEntity<?> redeemReward(@RequestBody RedeemRequest request) {
+        try {
+            Transaction transaction = loopieService.redeemReward(request);
+            return ResponseEntity.ok(transaction);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     /**

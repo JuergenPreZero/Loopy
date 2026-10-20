@@ -13,6 +13,7 @@ export default function HistoryScreen({ userId }: HistoryScreenProps) {
 
   useEffect(() => {
     let isMounted = true;
+
     const loadTransactions = async (isInitial = false) => {
       if (!userId) return;
       if (isInitial) setIsLoading(true);
@@ -47,7 +48,7 @@ export default function HistoryScreen({ userId }: HistoryScreenProps) {
       <View style={styles.header}>
         <Text style={styles.title}>Verlauf</Text>
         <Text style={styles.subtitle}>
-          Deine bisherigen Abgaben.
+          Deine bisherigen Abgaben und Pfand-Gutschriften.
         </Text>
       </View>
 

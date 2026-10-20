@@ -1,6 +1,9 @@
 package de.loopie.service;
 
+import de.loopie.dto.RedeemRequest;
 import de.loopie.dto.ThrowInRequest;
+import de.loopie.dto.UpdateUserRequest;
+import de.loopie.dto.UserResponseDTO;
 import de.loopie.entity.Transaction;
 import de.loopie.entity.User;
 import de.loopie.repository.TransactionRepository;
@@ -8,19 +11,18 @@ import de.loopie.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.Map;
-import java.util.UUID;
-import de.loopie.dto.UpdateUserRequest;
-import de.loopie.dto.UserResponseDTO;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
- * Main Service for Loopie, handles transactional logic.
+ * Main service for Loopie, managing recycling transactions, reward redemptions,
+ * user balance recalculations, and profile updates.
  */
 @Service
 public class LoopieService {
+
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
 
@@ -28,9 +30,9 @@ public class LoopieService {
      * Valuation mapping defining ReCoin rewards for each supported item type.
      */
     private static final Map<String, Integer> unitPrices = Map.of(
-            "Tennis Ball",20,
-            "Laufschuhe",50,
-            "T-Shirt",35
+            "Tennis Ball", 20,
+            "Laufschuhe", 50,
+            "T-Shirt", 35
     );
 
     public LoopieService(TransactionRepository transactionRepository, UserRepository userRepository) {
@@ -39,10 +41,10 @@ public class LoopieService {
     }
 
     /**
-     * Gets the total amount of all the units summed by userid.
-     * @param userId An ID meant to identify USER.
-     * @param userId An ID meant to identify USER.
-     * @return returns USER total amount of items.
+     * Gets the total amount of all recycled units summed by user ID.
+     *
+     * @param userId the unique identifier of the user
+     * @return total count of recycled items
      */
     public int getTotalQuantity(UUID userId) {
         Integer total = transactionRepository.sumAmountByUserId(userId);
@@ -54,10 +56,11 @@ public class LoopieService {
      *
      * @param userId the unique identifier of the user
      * @return the {@link User} entity
+     * @throws IllegalArgumentException if no user exists with the provided ID
      */
     public User getUserById(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User "+ userId + " not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User " + userId + " not found"));
     }
 
     /**
@@ -70,10 +73,13 @@ public class LoopieService {
     }
 
     /**
-     * Checks for existing User and valid UnitID. Calculates the total value.
-     * saves values persistently.
-     * @param request Data object send by iot
-     * @return the transactional entity {@link Transaction}.
+     * Processes an incoming recycling throw-in event triggered by an IoT station.
+     * Validates user identity and item type, computes total ReCoins earned, records
+     * the transaction, and recalculates the user's balance.
+     *
+     * @param request data transfer object containing the IoT throw-in event details
+     * @return the persisted {@link Transaction} entity
+     * @throws IllegalArgumentException if the public ID is not found or the unit ID is invalid
      */
     @Transactional
     public Transaction processThrowIn(ThrowInRequest request) {
@@ -92,7 +98,7 @@ public class LoopieService {
         transaction.setAmount(request.getAmount());
         transaction.setValue(totalValue);
         transaction.setUnitId(request.getUnitId());
-        Transaction savedTransaction = transactionRepository.save(transaction);
+        Transaction savedTransaction = transactionRepository.saveAndFlush(transaction);
 
         Long totalBalance = transactionRepository.sumBalanceByUserId(user.getId());
 
@@ -103,12 +109,48 @@ public class LoopieService {
     }
 
     /**
-     * Processes an incoming recycling throw-in event triggered by an IoT station.
-     * Validates user identity and item type, computes total ReCoins earned, records
-     * the transaction, and recalculates the user's materialized balance on write.
+     * Redeems a partner reward by deducting ReCoins via a negative transaction value.
      *
-     * @param request data transfer object containing the IoT throw-in event details
-     * @return the persisted {@link Transaction} entity
+     * @param request data transfer object containing user ID, reward title, and coin cost
+     * @return the persisted {@link Transaction} entity representing the redemption
+     * @throws IllegalArgumentException if user is not found, cost is non-positive, or balance is insufficient
+     */
+    @Transactional
+    public Transaction redeemReward(RedeemRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User " + request.getUserId() + " not found"));
+
+        if (request.getCost() <= 0) {
+            throw new IllegalArgumentException("Cost must be greater than zero.");
+        }
+
+        if (user.getBalance() < request.getCost()) {
+            throw new IllegalArgumentException("Not enough ReCoins available.");
+        }
+
+        Transaction transaction = new Transaction();
+        transaction.setUser(user);
+        transaction.setUnitId(request.getRewardTitle());
+        transaction.setAmount(1);
+        transaction.setValue(-request.getCost());
+        Transaction savedTransaction = transactionRepository.saveAndFlush(transaction);
+
+        Long totalBalance = transactionRepository.sumBalanceByUserId(user.getId());
+
+        user.setBalance(totalBalance != null ? totalBalance.intValue() : 0);
+        userRepository.save(user);
+
+        return savedTransaction;
+    }
+
+    /**
+     * Updates an existing user's profile details.
+     * Validates input values, normalizes email format, and checks for email collisions.
+     *
+     * @param userId the unique identifier of the user to update
+     * @param request data transfer object containing updated profile fields
+     * @return the updated user record as a {@link UserResponseDTO}
+     * @throws IllegalArgumentException if required fields are blank or email is in use by another user
      */
     @Transactional
     public UserResponseDTO updateUserProfile(UUID userId, UpdateUserRequest request) {

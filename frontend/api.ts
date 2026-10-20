@@ -1,10 +1,10 @@
-const LOOPIE_BASE_URL = 'http://localhost:8080/api/loopie';
+const BASE_URL = 'http://localhost:8080/api/loopie';
 const AUTH_BASE_URL = 'http://localhost:8080/api/auth';
 
 export interface BackendTransaction {
   id: number;
   amount: number;
-  unitId: String;
+  unitId: string;
   value: number;
   timeStamp: string;
 }
@@ -59,7 +59,7 @@ export const loginUser = async (email: string, password: string) => {
 // Main Functions
 
 export const fetchTotalQuantity = async (userId: string): Promise<number> => {
-  const response = await fetch(`${LOOPIE_BASE_URL}/quantity/${userId}`, {
+  const response = await fetch(`${BASE_URL}/quantity/${userId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ export const fetchTotalQuantity = async (userId: string): Promise<number> => {
 };
 
 export const fetchUserBalance = async (userId: string): Promise<number> => {
-  const response = await fetch(`${LOOPIE_BASE_URL}/balance/${userId}`, {
+  const response = await fetch(`${BASE_URL}/balance/${userId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -92,7 +92,7 @@ export const fetchUserBalance = async (userId: string): Promise<number> => {
 
 export const getUserData = async (userId: string) => {
   try {
-    const response = await fetch(`${LOOPIE_BASE_URL}/user/${userId}`, {
+    const response = await fetch(`${BASE_URL}/user/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ export const getUserData = async (userId: string) => {
 
 export const updateUserProfile = async (userId: string, data: UpdateUserData) => {
   try {
-    const response = await fetch(`${LOOPIE_BASE_URL}/user/${userId}`, {
+    const response = await fetch(`${BASE_URL}/user/${userId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ export const updateUserProfile = async (userId: string, data: UpdateUserData) =>
 
 export const deleteAccount = async (userId: string) => {
   try {
-    const response = await fetch(`${LOOPIE_BASE_URL}/user/${userId}`, {
+    const response = await fetch(`${BASE_URL}/user/${userId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -156,7 +156,7 @@ export const deleteAccount = async (userId: string) => {
 export const fetchUserTransactions = async (
   userId: string
 ): Promise<BackendTransaction[]> => {
-  const response = await fetch(`${LOOPIE_BASE_URL}/user/${userId}/transactions`);
+  const response = await fetch(`${BASE_URL}/user/${userId}/transactions`);
 
   if (!response.ok) {
     throw new Error('Fehler beim Laden der Transaktionen');
@@ -164,3 +164,18 @@ export const fetchUserTransactions = async (
 
   return await response.json();
 };
+
+export async function redeemReward(userId: string, rewardTitle: string, cost: number): Promise<BackendTransaction> {
+  const response = await fetch(`${BASE_URL}/redeem`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, rewardTitle, cost }),
+  });
+
+  if (!response.ok) {
+    const errorMsg = await response.text();
+    throw new Error(errorMsg || 'Fehler beim Einlösen der Prämie');
+  }
+
+  return response.json();
+}

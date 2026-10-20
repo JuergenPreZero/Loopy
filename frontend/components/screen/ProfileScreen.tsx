@@ -21,13 +21,11 @@ interface ProfileScreenProps {
 }
 
 export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) {
-  // Aktuelle Formularwerte
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [publicId, setPublicId] = useState('');
+  const [publicId, setPublicId] = useState('');                                                                                                                                                  
 
-  // Ursprüngliche Werte zum Vergleichen
   const [originalUser, setOriginalUser] = useState<{
     firstName: string;
     lastName: string;
@@ -64,7 +62,6 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
           setEmail(loadedEmail);
           setPublicId(data.publicId || '');
 
-          // Ausgangsdaten merken
           setOriginalUser({
             firstName: loadedFirst,
             lastName: loadedLast,
@@ -85,7 +82,6 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
     };
   }, [userId]);
 
-  // Prüfen, ob eine Eingabe vom Original abweicht
   const hasChanges = Boolean(
     originalUser &&
       (firstName !== originalUser.firstName ||
@@ -118,12 +114,10 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
         email: normalizedEmail,
       });
 
-      // Bereinigte Werte übernehmen
       setFirstName(trimmedFirst);
       setLastName(trimmedLast);
       setEmail(normalizedEmail);
 
-      // Ursprungswerte aktualisieren -> Speichern-Button verschwindet automatisch
       setOriginalUser({
         firstName: trimmedFirst,
         lastName: trimmedLast,
@@ -160,7 +154,6 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <Text style={styles.title}>Profil</Text>
 
-      {/* Vorname */}
       <View style={styles.box}>
         <Text style={styles.label}>Vorname</Text>
         <View style={styles.row}>
@@ -180,7 +173,6 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
         </View>
       </View>
 
-      {/* Nachname */}
       <View style={styles.box}>
         <Text style={styles.label}>Nachname</Text>
         <View style={styles.row}>
@@ -200,7 +192,6 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
         </View>
       </View>
 
-      {/* E-Mail */}
       <View style={styles.box}>
         <Text style={styles.label}>E-Mail</Text>
         <View style={styles.row}>
@@ -222,7 +213,6 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
         </View>
       </View>
 
-      {/* Nutzer-ID */}
       <View style={styles.box}>
         <Text style={styles.label}>Nutzer-ID</Text>
         <Text style={styles.text}>{publicId || '–'}</Text>
@@ -230,7 +220,6 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
 
       {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
 
-      {/* Button erscheint NUR, wenn hasChanges === true */}
       {hasChanges && (
         <TouchableOpacity
           style={[styles.button, styles.saveButton]}
@@ -245,12 +234,10 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
         </TouchableOpacity>
       )}
 
-      {/* Abmelden-Button */}
       <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={onLogout}>
         <Text style={styles.logoutButtonText}>Abmelden</Text>
       </TouchableOpacity>
 
-      {/* Konto löschen */}
       <View style={styles.deleteArea}>
         {!showConfirm ? (
           <TouchableOpacity onPress={() => setShowConfirm(true)}>

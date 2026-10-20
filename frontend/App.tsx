@@ -8,11 +8,12 @@ import Navbar from './components/Navbar';
 import HomeScreen from './components/screen/HomeScreen';
 import ProfileScreen from './components/screen/ProfileScreen'; 
 import QrScreen from './components/screen/QrScreen';
-import DummyPage from './components/DummyPage'; 
 import LandingScreen from './components/auth/LandingScreen';
 import LoginScreen from './components/auth/LoginScreen';
 import RegisterScreen from './components/auth/RegisterScreen';
 import HistoryScreen from './components/screen/HistoryScreen';
+import ShopScreen from './components/screen/ShopScreen';
+
 
 const USER_STORAGE_KEY = '@loopie_user_id';
 
@@ -22,7 +23,7 @@ export default function App() {
   const [activePage, setActivePage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  useEffect(() => { 
     const checkSavedUser = async () => {
       try {
         const savedUserId = await AsyncStorage.getItem(USER_STORAGE_KEY);
@@ -107,7 +108,7 @@ export default function App() {
       case 3: 
         return <QrScreen userId={currentUserId} />;
       case 4: 
-        return <DummyPage pageNumber={4} />;
+        return <ShopScreen userId={currentUserId} />;
       case 5: 
         return <ProfileScreen userId={currentUserId} onLogout={handleLogout} />;
       default: 
