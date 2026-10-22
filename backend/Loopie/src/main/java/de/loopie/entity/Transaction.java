@@ -29,6 +29,10 @@ public class Transaction {
     @Column(nullable = false)
     private String unitId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TransactionType type;
+
     @org.hibernate.annotations.CreationTimestamp
     @Column(nullable = false)
     private OffsetDateTime timeStamp;
@@ -82,5 +86,13 @@ public class Transaction {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public TransactionType getType() {
+        return type;
+    }
+
+    public void setType(TransactionType type) {
+        this.type = type;
     }
 }
