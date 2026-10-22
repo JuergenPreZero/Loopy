@@ -39,6 +39,10 @@ public class User {
     @Column(nullable = false)
     private boolean isVerified = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.USER;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions;
 
@@ -115,4 +119,8 @@ public class User {
     public void setVerified(boolean verified) {
         isVerified = verified;
     }
+
+    public Role getRole() {return role;}
+
+    public void setRole(Role role) {this.role = role;}
 }

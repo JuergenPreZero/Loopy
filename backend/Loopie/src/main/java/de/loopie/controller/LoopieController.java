@@ -1,9 +1,7 @@
 package de.loopie.controller;
 
-import de.loopie.dto.RedeemRequest;
-import de.loopie.dto.ThrowInRequest;
-import de.loopie.dto.UpdateUserRequest;
-import de.loopie.dto.UserResponseDTO;
+import de.loopie.dto.*;
+import de.loopie.entity.Reward;
 import de.loopie.entity.Transaction;
 import de.loopie.entity.User;
 import de.loopie.repository.TransactionRepository;
@@ -115,6 +113,11 @@ public class LoopieController {
         }
     }
 
+    @GetMapping("/rewards")
+    public ResponseEntity<List<Reward>> getRewards() {
+        return ResponseEntity.ok(loopieService.getActiveRewards());
+    }
+
     /**
      * Updates an existing user's profile information.
      *
@@ -129,6 +132,28 @@ public class LoopieController {
         try {
             UserResponseDTO updated = loopieService.updateUserProfile(userId, request);
             return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/rewards")
+    public ResponseEntity<?> createReward(@RequestBody CreateRewardRequest request) {
+        try {
+            Reward createdReward = loopieService.createReward(request);
+            return ResponseEntity.ok(createdReward);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/rewards/{rewardId}")
+    public ResponseEntity<?> deleteReward(
+            @PathVariable UUID rewardId,
+            @RequestParam UUID adminUserId) {
+        try {
+            loopieService.deleteReward(rewardId, adminUserId);
+            return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

@@ -1,20 +1,17 @@
 package de.loopie.service;
 
-import de.loopie.dto.RedeemRequest;
-import de.loopie.dto.ThrowInRequest;
-import de.loopie.dto.UpdateUserRequest;
-import de.loopie.dto.UserResponseDTO;
+import de.loopie.dto.*;
+import de.loopie.entity.Reward;
+import de.loopie.entity.Role;
 import de.loopie.entity.Transaction;
 import de.loopie.entity.User;
+import de.loopie.repository.RewardRepository;
 import de.loopie.repository.TransactionRepository;
 import de.loopie.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Main service for Loopie, managing recycling transactions, reward redemptions,
@@ -25,6 +22,7 @@ public class LoopieService {
 
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
+    private final RewardRepository rewardRepository;
 
     /**
      * Valuation mapping defining ReCoin rewards for each supported item type.
@@ -35,9 +33,10 @@ public class LoopieService {
             "T-Shirt", 35
     );
 
-    public LoopieService(TransactionRepository transactionRepository, UserRepository userRepository) {
+    public LoopieService(TransactionRepository transactionRepository, UserRepository userRepository, RewardRepository rewardRepository) {
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
+        this.rewardRepository = rewardRepository;
     }
 
     /**
@@ -180,5 +179,55 @@ public class LoopieService {
 
         User savedUser = userRepository.save(user);
         return new UserResponseDTO(savedUser);
+    }
+
+    public List<Reward> getActiveRewards() {
+        return rewardRepository.findByActiveTrue();
+    }
+
+    @Transactional
+    public Reward createReward(CreateRewardRequest request) {
+        User user = userRepository.findById(request.getAdminUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User nicht gefunden"));
+
+        if (user.getRole() != Role.ADMIN) {
+            throw new IllegalArgumentException("Zugriff verweigert: Nur Admins dürfen Prämien anlegen.");
+        }
+
+        if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("Titel darf nicht leer sein.");
+        }
+        if (request.getPartnerName() == null || request.getPartnerName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Partnername darf nicht leer sein.");
+        }
+        if (request.getCost() <= 0) {
+            throw new IllegalArgumentException("Kosten müssen größer als 0 sein.");
+        }
+
+        Reward reward = new Reward(
+                request.getTitle().trim(),
+                request.getPartnerName().trim(),
+                request.getCost(),
+                request.getDescription(),
+                true
+        );
+
+        return rewardRepository.save(reward);
+    }
+
+    @Transactional
+    public void deleteReward(UUID rewardId, UUID adminUserId) {
+        User user = userRepository.findById(adminUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Nutzer nicht gefunden."));
+
+        if (user.getRole() != Role.ADMIN) {
+            throw new IllegalArgumentException("Zugriff verweigert: Nur Admins dürfen Prämien löschen.");
+        }
+
+        if (!rewardRepository.existsById(rewardId)) {
+            throw new IllegalArgumentException("Prämie existiert nicht.");
+        }
+
+        rewardRepository.deleteById(rewardId);
     }
 }

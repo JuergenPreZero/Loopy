@@ -15,6 +15,25 @@ export interface UpdateUserData {
   email: string;
 }
 
+export interface Reward {
+  id: string;
+  title: string;
+  partnerName: string;
+  cost: number;
+  description?: string;
+  active: boolean;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  publicId: string;
+  balance: number;
+  role: 'USER' | 'ADMIN';
+}
+
 // Auth
 
 export const registerUser = async (
@@ -178,4 +197,44 @@ export async function redeemReward(userId: string, rewardTitle: string, cost: nu
   }
 
   return response.json();
+}
+
+export async function fetchRewards(): Promise<Reward[]> {
+  const response = await fetch(`${BASE_URL}/rewards`);
+  if (!response.ok) {
+    throw new Error('Fehler beim Laden der Prämien');
+  }
+  return response.json();
+}
+
+export async function createReward(payload: {
+  adminUserId: string;
+  title: string;
+  partnerName: string;
+  cost: number;
+  description?: string;
+}): Promise<Reward> {
+  const response = await fetch(`${BASE_URL}/rewards`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || 'Fehler beim Anlegen der Prämie');
+  }
+
+  return response.json();
+}
+
+export async function deleteReward(rewardId: string, adminUserId: string): Promise<void> {
+  const response = await fetch(`${BASE_URL}/rewards/${rewardId}?adminUserId=${adminUserId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || 'Fehler beim Löschen der Prämie');
+  }
 }
