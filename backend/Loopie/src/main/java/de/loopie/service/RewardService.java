@@ -1,5 +1,7 @@
 package de.loopie.service;
 
+import de.loopie.common.InsufficientBalanceException;
+import de.loopie.dto.BatchRedeemRequest;
 import de.loopie.dto.CreateRewardRequest;
 import de.loopie.dto.RedeemRequest;
 import de.loopie.entity.*;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,7 +45,7 @@ public class RewardService {
         }
 
         if (user.getBalance() < request.getCost()) {
-            throw new IllegalStateException("Insufficient ReCoins balance.");
+            throw new InsufficientBalanceException("Insufficient ReCoins balance.");
         }
 
         user.setBalance(user.getBalance() - request.getCost());
@@ -102,5 +105,41 @@ public class RewardService {
 
         reward.setActive(false);
         rewardRepository.save(reward);
+    }
+
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public List<Transaction> redeemBatch(BatchRedeemRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + request.getUserId()));
+
+        int totalCost = 0;
+        for (BatchRedeemRequest.RedeemItemDTO item : request.getItems()) {
+            if (item.getCost() <= 0 || item.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Ungültige Kosten oder Menge.");
+            }
+            totalCost += (item.getCost() * item.getQuantity());
+        }
+
+        if (user.getBalance() < totalCost) {
+            throw new InsufficientBalanceException("Insufficient ReCoins balance for order.");
+        }
+
+        user.setBalance(user.getBalance() - totalCost);
+        userRepository.save(user);
+
+        List<Transaction> savedTransactions = new ArrayList<>();
+        for (BatchRedeemRequest.RedeemItemDTO item : request.getItems()) {
+            for (int i = 0; i < item.getQuantity(); i++) {
+                Transaction tx = new Transaction();
+                tx.setUser(user);
+                tx.setUnitId(item.getRewardTitle());
+                tx.setAmount(1);
+                tx.setValue(-item.getCost());
+                tx.setType(TransactionType.REDEMPTION);
+                savedTransactions.add(transactionRepository.save(tx));
+            }
+        }
+
+        return savedTransactions;
     }
 }

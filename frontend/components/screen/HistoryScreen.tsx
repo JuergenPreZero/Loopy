@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import TransactionItem from '../TransactionItem';
-import { fetchUserTransactions, BackendTransaction } from '../../api'; 
+import { fetchUserTransactions, BackendTransaction } from '../../api';
+import { globalStyles, colors } from '../../theme';
 
 interface HistoryScreenProps {
   userId: string;
@@ -24,7 +25,7 @@ export default function HistoryScreen({ userId }: HistoryScreenProps) {
           setTransactions(data);
         }
       } catch (error) {
-        console.error("Fehler beim Abrufen der Transaktionen:", error);
+        console.error('Fehler beim Abrufen der Transaktionen:', error);
       } finally {
         if (isInitial && isMounted) {
           setIsLoading(false);
@@ -35,7 +36,7 @@ export default function HistoryScreen({ userId }: HistoryScreenProps) {
     loadTransactions(true);
     const intervalId = setInterval(() => {
       loadTransactions(false);
-    }, 3000);
+    }, 4000);
 
     return () => {
       isMounted = false;
@@ -44,20 +45,23 @@ export default function HistoryScreen({ userId }: HistoryScreenProps) {
   }, [userId]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Verlauf</Text>
-        <Text style={styles.subtitle}>
+    <View style={globalStyles.screen}>
+      {/* Header-Bereich untereinander statt nebeneinander */}
+      <View style={{ marginBottom: 8 }}>
+        <Text style={globalStyles.title}>Verlauf</Text>
+        <Text style={globalStyles.subtitle}>
           Deine bisherigen Abgaben und Pfand-Gutschriften.
         </Text>
       </View>
 
       {isLoading ? (
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+        <View style={globalStyles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
       ) : transactions.length > 0 ? (
         <FlatList
           data={transactions}
-          keyExtractor={(item) => item.id.toString()} 
+          keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <TransactionItem
               itemType={item.unitId}
@@ -67,14 +71,33 @@ export default function HistoryScreen({ userId }: HistoryScreenProps) {
             />
           )}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={{ paddingBottom: 24 }}
         />
       ) : (
-        <View style={styles.placeholderContainer}>
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>Noch keine Abgaben</Text>
-            <Text style={styles.emptySubtitle}>
-              Noch nichts abgegeben, mache jetzt den ersten Schritt in eine bessere Zukunft.
+        /* Leerer Zustand: sauber zentriert mit Icon */
+        <View style={globalStyles.center}>
+          <View
+            style={[
+              globalStyles.card,
+              {
+                width: '100%',
+                alignItems: 'center',
+                paddingVertical: 32,
+                paddingHorizontal: 20,
+              },
+            ]}
+          >
+            <Text style={{ fontSize: 36, marginBottom: 12 }}>♻️</Text>
+            <Text style={[globalStyles.title, { fontSize: 18, textAlign: 'center' }]}>
+              Noch keine Abgaben
+            </Text>
+            <Text
+              style={[
+                globalStyles.subtitle,
+                { textAlign: 'center', marginBottom: 0, marginTop: 4 },
+              ]}
+            >
+              Du hast noch kein Leergut abgegeben. Sobald du etwas an der Station einwirfst, erscheint es hier.
             </Text>
           </View>
         </View>
@@ -82,54 +105,3 @@ export default function HistoryScreen({ userId }: HistoryScreenProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 20,
-    paddingTop: 24,
-  },
-  header: {
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#64748B',
-    lineHeight: 20,
-  },
-  listContainer: {
-    paddingBottom: 24,
-  },
-  placeholderContainer: {
-    flex: 1,
-  },
-  emptyCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderStyle: 'dashed',
-    marginTop: 12,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#334155',
-    marginBottom: 6,
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    color: '#94A3B8',
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-});

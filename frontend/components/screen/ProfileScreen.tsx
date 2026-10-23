@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TextInput,
-  StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
   ScrollView,
@@ -12,6 +11,7 @@ import { HugeiconsIcon } from '@hugeicons/react-native';
 import { Edit02Icon, PencilEdit02Icon } from '@hugeicons/core-free-icons';
 import { getUserData, deleteAccount, updateUserProfile } from '../../api';
 import { validator } from '../auth/UserValidator';
+import { globalStyles, colors } from '../../theme';
 
 const EditIconComponent = Edit02Icon || PencilEdit02Icon;
 
@@ -24,7 +24,7 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [publicId, setPublicId] = useState('');                                                                                                                                                  
+  const [publicId, setPublicId] = useState('');
 
   const [originalUser, setOriginalUser] = useState<{
     firstName: string;
@@ -144,60 +144,61 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
 
   if (isLoading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563EB" />
+      <View style={globalStyles.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Profil</Text>
+    <ScrollView contentContainerStyle={globalStyles.scrollContent}>
+      <Text style={globalStyles.title}>Profil</Text>
+      <Text style={globalStyles.subtitle}>Verwalte deine Kontodaten</Text>
 
-      <View style={styles.box}>
-        <Text style={styles.label}>Vorname</Text>
-        <View style={styles.row}>
+      <View style={globalStyles.card}>
+        <Text style={[globalStyles.subtitle, { marginBottom: 6 }]}>Vorname</Text>
+        <View style={globalStyles.row}>
           <TextInput
             ref={firstNameRef}
-            style={styles.input}
+            style={[globalStyles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
             value={firstName}
             onChangeText={setFirstName}
           />
           <TouchableOpacity onPress={() => firstNameRef.current?.focus()}>
             {EditIconComponent ? (
-              <HugeiconsIcon icon={EditIconComponent} size={20} color="#2563EB" />
+              <HugeiconsIcon icon={EditIconComponent} size={20} color={colors.primary} />
             ) : (
-              <Text style={styles.editFallback}>✏️</Text>
+              <Text>✏️</Text>
             )}
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.box}>
-        <Text style={styles.label}>Nachname</Text>
-        <View style={styles.row}>
+      <View style={globalStyles.card}>
+        <Text style={[globalStyles.subtitle, { marginBottom: 6 }]}>Nachname</Text>
+        <View style={globalStyles.row}>
           <TextInput
             ref={lastNameRef}
-            style={styles.input}
+            style={[globalStyles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
             value={lastName}
             onChangeText={setLastName}
           />
           <TouchableOpacity onPress={() => lastNameRef.current?.focus()}>
             {EditIconComponent ? (
-              <HugeiconsIcon icon={EditIconComponent} size={20} color="#2563EB" />
+              <HugeiconsIcon icon={EditIconComponent} size={20} color={colors.primary} />
             ) : (
-              <Text style={styles.editFallback}>✏️</Text>
+              <Text>✏️</Text>
             )}
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.box}>
-        <Text style={styles.label}>E-Mail</Text>
-        <View style={styles.row}>
+      <View style={globalStyles.card}>
+        <Text style={[globalStyles.subtitle, { marginBottom: 6 }]}>E-Mail</Text>
+        <View style={globalStyles.row}>
           <TextInput
             ref={emailRef}
-            style={styles.input}
+            style={[globalStyles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -205,56 +206,83 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
           />
           <TouchableOpacity onPress={() => emailRef.current?.focus()}>
             {EditIconComponent ? (
-              <HugeiconsIcon icon={EditIconComponent} size={20} color="#2563EB" />
+              <HugeiconsIcon icon={EditIconComponent} size={20} color={colors.primary} />
             ) : (
-              <Text style={styles.editFallback}>✏️</Text>
+              <Text>✏️</Text>
             )}
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.box}>
-        <Text style={styles.label}>Nutzer-ID</Text>
-        <Text style={styles.text}>{publicId || '–'}</Text>
+      <View style={globalStyles.card}>
+        <Text style={[globalStyles.subtitle, { marginBottom: 6 }]}>Nutzer-ID</Text>
+        <Text style={{ fontSize: 16, color: colors.text, fontWeight: '500' }}>
+          {publicId || '–'}
+        </Text>
       </View>
 
-      {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+      {errorMessage && (
+        <Text style={{ color: colors.danger, textAlign: 'center', marginVertical: 8 }}>
+          {errorMessage}
+        </Text>
+      )}
 
       {hasChanges && (
         <TouchableOpacity
-          style={[styles.button, styles.saveButton]}
+          style={[globalStyles.button, { marginTop: 8 }]}
           onPress={handleSave}
           disabled={isSaving}
         >
           {isSaving ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.saveButtonText}>Änderungen speichern</Text>
+            <Text style={globalStyles.buttonText}>Änderungen speichern</Text>
           )}
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={onLogout}>
-        <Text style={styles.logoutButtonText}>Abmelden</Text>
+      <TouchableOpacity
+        style={[globalStyles.buttonDanger, { marginTop: 16 }]}
+        onPress={onLogout}
+      >
+        <Text style={globalStyles.buttonText}>Abmelden</Text>
       </TouchableOpacity>
 
-      <View style={styles.deleteArea}>
+      <View style={{ marginTop: 20, marginBottom: 32 }}>
         {!showConfirm ? (
-          <TouchableOpacity onPress={() => setShowConfirm(true)}>
-            <Text style={styles.deleteText}>Konto löschen</Text>
+          <TouchableOpacity
+            style={{ alignItems: 'center', padding: 10 }}
+            onPress={() => setShowConfirm(true)}
+          >
+            <Text style={{ color: colors.textMuted, fontSize: 14, textDecorationLine: 'underline' }}>
+              Konto löschen
+            </Text>
           </TouchableOpacity>
         ) : (
-          <View style={styles.confirmBox}>
-            <Text style={styles.confirmText}>Konto wirklich löschen?</Text>
-            <View style={styles.row}>
-              <TouchableOpacity style={styles.confirmBtn} onPress={confirmAndDelete}>
-                <Text style={styles.confirmBtnText}>Ja, löschen</Text>
+          <View style={[globalStyles.card, { borderColor: colors.border, marginTop: 8 }]}>
+            <Text style={[globalStyles.subtitle, { textAlign: 'center', marginBottom: 12 }]}>
+              Möchtest du dein Konto und alle Daten unwiderruflich löschen?
+            </Text>
+            <View style={globalStyles.row}>
+              <TouchableOpacity
+                style={[
+                  globalStyles.buttonSecondary,
+                  { flex: 1, marginRight: 8, paddingVertical: 10 },
+                ]}
+                onPress={confirmAndDelete}
+              >
+                <Text style={[globalStyles.buttonText, { fontSize: 14 }]}>Ja, löschen</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.confirmBtn, { backgroundColor: '#6B7280', marginLeft: 10 }]}
+                style={[
+                  globalStyles.button,
+                  { flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, paddingVertical: 10 },
+                ]}
                 onPress={() => setShowConfirm(false)}
               >
-                <Text style={styles.confirmBtnText}>Abbrechen</Text>
+                <Text style={[globalStyles.buttonText, { color: colors.text, fontSize: 14 }]}>
+                  Abbrechen
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -263,28 +291,3 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
-  container: { padding: 20, flexGrow: 1, justifyContent: 'center' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#0F172A' },
-  box: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', padding: 12, borderRadius: 8, marginBottom: 12 },
-  label: { fontSize: 12, color: '#64748B', fontWeight: 'bold', marginBottom: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  input: { flex: 1, fontSize: 16, color: '#0F172A', paddingVertical: 4 },
-  text: { fontSize: 16, color: '#0F172A' },
-  editFallback: { fontSize: 18, paddingHorizontal: 4 },
-  errorText: { color: '#DC2626', textAlign: 'center', marginBottom: 10, fontWeight: '500' },
-  button: { padding: 14, borderRadius: 8, alignItems: 'center', marginTop: 10 },
-  saveButton: { backgroundColor: '#2563EB' },
-  saveButtonText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 },
-  logoutButton: { backgroundColor: '#FEE2E2' },
-  logoutButtonText: { color: '#DC2626', fontWeight: 'bold', fontSize: 16 },
-  deleteArea: { marginTop: 24, alignItems: 'center' },
-  deleteText: { color: '#94A3B8', fontSize: 14, textDecorationLine: 'underline' },
-  confirmBox: { padding: 14, borderWidth: 1, borderColor: '#DC2626', borderRadius: 8, backgroundColor: '#FEF2F2', alignItems: 'center', width: '100%' },
-  confirmText: { color: '#DC2626', fontWeight: 'bold', marginBottom: 10 },
-  confirmBtn: { backgroundColor: '#DC2626', padding: 8, borderRadius: 6 },
-  confirmBtnText: { color: '#FFFFFF', fontWeight: 'bold' },
-});

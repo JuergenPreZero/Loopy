@@ -40,7 +40,7 @@ export default function TransactionItem({ itemType, amount, value, date }: Trans
       <View style={styles.leftCol}>
         <Text style={styles.itemName}>{itemType}</Text>
         <Text style={styles.itemAmount}>
-          {isPositive ? `${amount} Stück abgegeben` : `${amount}x Prämie eingelöst`}
+          {isPositive ? `${amount} Stück abgegeben` : `Prämie eingelöst`}
         </Text>
         {date ? <Text style={styles.itemDate}>{formatShortDate(date)}</Text> : null}
       </View>

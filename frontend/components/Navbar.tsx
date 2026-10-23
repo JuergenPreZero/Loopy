@@ -1,100 +1,98 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import { Home01Icon, UserIcon, QrCodeIcon, HistoryIcon, Location04Icon } from '@hugeicons/core-free-icons';
+import {
+  Home01Icon,
+  UserIcon,
+  QrCodeIcon,
+  HistoryIcon,
+  Location04Icon,
+} from '@hugeicons/core-free-icons';
+import { colors } from '../theme';
 
 interface NavbarProps {
   activePage: number;
-  setActivePage: (page: number) => void; 
+  setActivePage: (page: number) => void;
 }
 
-const Navbar = ({ activePage, setActivePage }: NavbarProps) => {
+export default function Navbar({ activePage, setActivePage }: NavbarProps) {
   return (
-    <View style={styles.navbar}>
-      <TouchableOpacity style={styles.button} onPress={() => setActivePage(1)}>
-        <HugeiconsIcon 
+    <View
+      style={{
+        width: '100%',
+        height: 70,
+        backgroundColor: colors.surface,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+      }}
+    >
+      <TouchableOpacity
+        style={{ padding: 10, alignItems: 'center', justifyContent: 'center' }}
+        onPress={() => setActivePage(1)}
+      >
+        <HugeiconsIcon
           icon={Home01Icon}
-          size={24} 
-          color={activePage === 1 ? "#2563EB" : "#6B7280"} 
+          size={24}
+          color={activePage === 1 ? colors.primary : colors.textMuted}
         />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={() => setActivePage(2)}>
-        <HugeiconsIcon 
-        icon={HistoryIcon}
-        size={24}
-        color={activePage === 2 ? "#2563EB" : "#6B7280"}
+      {/* 2: History */}
+      <TouchableOpacity
+        style={{ padding: 10, alignItems: 'center', justifyContent: 'center' }}
+        onPress={() => setActivePage(2)}
+      >
+        <HugeiconsIcon
+          icon={HistoryIcon}
+          size={24}
+          color={activePage === 2 ? colors.primary : colors.textMuted}
         />
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        style={[styles.qrButton, activePage === 3 && styles.activeQrButton]} 
+      <TouchableOpacity
+        style={{
+          width: 52,
+          height: 52,
+          borderRadius: 26,
+          borderWidth: 2,
+          borderColor: colors.primary,
+          backgroundColor: activePage === 3 ? colors.primary : colors.surface,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
         onPress={() => setActivePage(3)}
       >
-        <HugeiconsIcon 
+        <HugeiconsIcon
           icon={QrCodeIcon}
-          size={26} 
-          color={activePage === 3 ? "#FFFFFF" : "#2563EB"} 
+          size={26}
+          color={activePage === 3 ? '#FFFFFF' : colors.primary}
         />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={() => setActivePage(4)}>
-        <HugeiconsIcon 
-        icon={Location04Icon}
-        size={24}
-        color={activePage === 4 ? "#2563EB" : "#6B7280"}
+      <TouchableOpacity
+        style={{ padding: 10, alignItems: 'center', justifyContent: 'center' }}
+        onPress={() => setActivePage(4)}
+      >
+        <HugeiconsIcon
+          icon={Location04Icon}
+          size={24}
+          color={activePage === 4 ? colors.primary : colors.textMuted}
         />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={() => setActivePage(5)}>
-        <HugeiconsIcon 
+      <TouchableOpacity
+        style={{ padding: 10, alignItems: 'center', justifyContent: 'center' }}
+        onPress={() => setActivePage(5)}
+      >
+        <HugeiconsIcon
           icon={UserIcon}
-          size={24} 
-          color={activePage === 5 ? "#2563EB" : "#6B7280"} 
+          size={24}
+          color={activePage === 5 ? colors.primary : colors.textMuted}
         />
       </TouchableOpacity>
     </View>
   );
-};
-
-const styles = StyleSheet.create({
-  navbar: {
-    width: '100%',
-    height: 70,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  button: {
-    padding: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  qrButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: '#2563EB',
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activeQrButton: {
-    backgroundColor: '#2563EB',
-  },
-  text: {
-    color: '#6B7280',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  activeText: {
-    color: '#2563EB',
-    fontSize: 18,
-  }
-});
-
-export default Navbar;
+}

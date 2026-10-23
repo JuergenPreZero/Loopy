@@ -1,57 +1,129 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { fetchTotalQuantity } from '../../api';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  RefreshControl,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+import { HugeiconsIcon } from '@hugeicons/react-native';
+import { QrCodeIcon, Location04Icon } from '@hugeicons/core-free-icons';
+import { useUser } from '../UserContext';
+import { globalStyles, colors } from '../../theme';
 
 interface HomeScreenProps {
-  userId: string
+  userId?: string;
+  setActivePage?: (page: number) => void;
 }
 
-export default function HomeScreen({userId}:HomeScreenProps) {
-  const [number, setNumber] = useState<number>(0);
+export default function HomeScreen({ setActivePage }: HomeScreenProps) {
+  const { user, totalQuantity, isInitialLoading, refreshData } = useUser();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    const loadQuantity = async () => {
-      try {
-        const data = await fetchTotalQuantity(userId);
-        setNumber(data);
-      } catch (error) {
-        console.error("Polling-Fehler:", error);
-      }
-    };
+  const onRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshData();
+    setIsRefreshing(false);
+  };
 
-    loadQuantity();
-    const intervalId = setInterval(loadQuantity, 3000);
+  if (isInitialLoading && !user) {
+    return (
+      <View style={globalStyles.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
-    return () => clearInterval(intervalId);
-  }, []);
+  const firstName = user?.firstName || 'du';
+  const estimatedCoins = totalQuantity * 35;
+  const co2Saved = (totalQuantity * 0.42).toFixed(1);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.blackText}>Menge: {number}</Text> 
-    </View> 
+    <ScrollView
+      contentContainerStyle={globalStyles.scrollContent}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={onRefresh}
+          colors={[colors.primary]}
+          tintColor={colors.primary}
+        />
+      }
+    >
+      <View style={{ marginBottom: 16 }}>
+        <Text style={globalStyles.title}>Hey {firstName}, </Text>
+        <Text style={globalStyles.subtitle}>
+          Schön, dass du wieder da bist!
+        </Text>
+      </View>
+
+      <View style={globalStyles.card}>
+        <Text style={[globalStyles.subtitle, { marginBottom: 4 }]}>Bisher recycelt</Text>
+        <Text style={globalStyles.bigNumber}>{totalQuantity}</Text>
+        <Text style={[globalStyles.subtitle, { marginBottom: 0, marginTop: 8 }]}>
+          Artikel wieder zurück in den Kreislauf gebracht
+        </Text>
+      </View>
+
+      <View style={[globalStyles.row, { marginBottom: 16 }]}>
+        <View style={[globalStyles.card, { flex: 1, marginRight: 6, marginBottom: 0 }]}>
+          <Text style={[globalStyles.subtitle, { marginBottom: 4, fontSize: 13 }]}>Coins verdient</Text>
+          <Text style={{ fontSize: 22, fontWeight: '700', color: colors.primary }}>
+            {estimatedCoins}
+          </Text>
+          <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>ReCoins gesammelt</Text>
+        </View>
+
+        <View style={[globalStyles.card, { flex: 1, marginLeft: 6, marginBottom: 0 }]}>
+          <Text style={[globalStyles.subtitle, { marginBottom: 4, fontSize: 13 }]}>CO₂ gespart</Text>
+          <Text style={{ fontSize: 22, fontWeight: '700', color: '#16A34A' }}>
+            {co2Saved} kg
+          </Text>
+          <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>Emissionen verhindert</Text>
+        </View>
+      </View>
+
+      <View style={globalStyles.row}>
+        {/* Stationen (selbe Farbe wie QR-Code) */}
+        <TouchableOpacity
+          style={[
+            globalStyles.button,
+            {
+              flex: 1,
+              marginRight: 6,
+              flexDirection: 'row',
+              justifyContent: 'center',
+            },
+          ]}
+          activeOpacity={0.8}
+        >
+          {Location04Icon ? (
+            <HugeiconsIcon icon={Location04Icon} size={18} color="#FFFFFF" />
+          ) : null}
+          <Text style={[globalStyles.buttonText, { marginLeft: 8 }]}>Stationen</Text>
+        </TouchableOpacity>
+
+        {/* QR-Code Navigation zur Seite 3 */}
+        <TouchableOpacity
+          style={[
+            globalStyles.button,
+            {
+              flex: 1,
+              marginLeft: 6,
+              flexDirection: 'row',
+              justifyContent: 'center',
+            },
+          ]}
+          onPress={() => setActivePage && setActivePage(3)}
+          activeOpacity={0.8}
+        >
+          {QrCodeIcon ? (
+            <HugeiconsIcon icon={QrCodeIcon} size={18} color="#FFFFFF" />
+          ) : null}
+          <Text style={[globalStyles.buttonText, { marginLeft: 8 }]}>QR-Code</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center',
-  },
-  blackText: {
-    color: 'black',
-    fontSize: 24,
-    marginBottom: 20,
-  },
-  whiteText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  button: {
-    backgroundColor: '#10B981',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-  },
-});

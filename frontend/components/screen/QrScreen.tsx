@@ -1,121 +1,84 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { getUserData } from '../../api';
+import { globalStyles, colors } from '../../theme';
 
 interface QrScreenProps {
   userId: string;
 }
 
-interface QrUserData {
-  publicId?: string;
-  shortCode?: string;
-}
-
 export default function QrScreen({ userId }: QrScreenProps) {
-  const [userData, setUserData] = useState<QrUserData | null>(null);
+  const [publicId, setPublicId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchUserData = async () => {
       try {
         if (!userId) return;
         const data = await getUserData(userId);
-        setUserData(data);
-      } catch (error) {
-        console.error("Fehler beim Laden der QR-Daten:", error);
+        if (isMounted) {
+          if (data?.publicId) {
+            setPublicId(data.publicId);
+          } else {
+            setError('Keine gültige Public-ID gefunden.');
+          }
+        }
+      } catch (err) {
+        if (isMounted) setError('Fehler beim Laden des QR-Codes.');
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchUserData();
+    return () => {
+      isMounted = false;
+    };
   }, [userId]);
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#2563EB" />
+      <View style={globalStyles.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
-  const displayCode = userData?.publicId || userData?.shortCode || "LP-984211";
+  if (error || !publicId) {
+    return (
+      <View style={globalStyles.center}>
+        <Text style={[globalStyles.subtitle, { color: colors.danger, textAlign: 'center' }]}>
+          {error || 'Code nicht verfügbar.'}
+        </Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Mein QR-Code</Text>
-      <Text style={styles.subtitle}>
+    <View style={globalStyles.screen}>
+      <Text style={globalStyles.title}>Mein QR-Code</Text>
+      <Text style={globalStyles.subtitle}>
         Halte den Code an den Scanner der Station, um dich anzumelden.
       </Text>
 
-      <View style={styles.qrCard}>
+      <View style={[globalStyles.card, { alignItems: 'center', paddingVertical: 24, marginVertical: 12 }]}>
         <QRCode
-          value={displayCode}
+          value={publicId}
           size={220}
-          color="#0F172A"
-          backgroundColor="#FFFFFF"
+          color={colors.text}
+          backgroundColor={colors.surface}
         />
-        <Text style={styles.codeText}>{displayCode}</Text>
+        <Text style={[globalStyles.subtitle, { marginTop: 16, marginBottom: 0, fontWeight: '600', color: colors.text, letterSpacing: 1 }]}>
+          {publicId}
+        </Text>
       </View>
 
-      <Text style={styles.tipText}>
+      <Text style={[globalStyles.subtitle, { textAlign: 'center', marginTop: 8 }]}>
         Tipp: Bildschirmhelligkeit erhöhen, falls der Scanner Schwierigkeiten hat.
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  center: {
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#64748B',
-    textAlign: 'center',
-    marginBottom: 32,
-    paddingHorizontal: 16,
-    lineHeight: 20,
-  },
-  qrCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 24,
-    borderRadius: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  codeText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#475569',
-    letterSpacing: 2,
-    marginTop: 18,
-  },
-  tipText: {
-    fontSize: 12,
-    color: '#94A3B8',
-    textAlign: 'center',
-    marginTop: 32,
-    maxWidth: 280,
-  },
-});

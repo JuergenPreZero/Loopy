@@ -13,9 +13,11 @@ import LoginScreen from './components/auth/LoginScreen';
 import RegisterScreen from './components/auth/RegisterScreen';
 import HistoryScreen from './components/screen/HistoryScreen';
 import ShopScreen from './components/screen/ShopScreen';
-
+import { UserProvider } from './components/UserContext';
 
 const USER_STORAGE_KEY = '@loopie_user_id';
+
+
 
 export default function App() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -90,7 +92,7 @@ export default function App() {
           {authPage === 'register' && (
             <RegisterScreen 
               onBack={() => setAuthPage('landing')}
-              onRegisterSuccess={() => setAuthPage('login')} 
+              onRegisterSuccess={(userId) => handleLoginSuccess(userId, true)} 
               onNavigateLogin={() => setAuthPage('login')}
             />
           )}
@@ -119,11 +121,13 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        <Header userId={currentUserId} />
-        <View style={styles.content}>
-          {renderContent()}
-        </View>
-        <Navbar activePage={activePage} setActivePage={setActivePage} />
+        <UserProvider userId={currentUserId}>
+          <Header userId={currentUserId} />
+          <View style={styles.content}>
+            {renderContent()}
+          </View>
+          <Navbar activePage={activePage} setActivePage={setActivePage} />
+        </UserProvider>
       </SafeAreaView>
     </SafeAreaProvider>
   );

@@ -1,11 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
+import { HugeiconsIcon } from '@hugeicons/react-native';
+import { ViewIcon, ViewOffSlashIcon } from '@hugeicons/core-free-icons';
 import { registerUser } from '../../api';
 import { validator } from '../auth/UserValidator';
 
 interface RegisterScreenProps {
   onBack: () => void;
-  onRegisterSuccess: () => void;
+  onRegisterSuccess: (userId: string) => void;
   onNavigateLogin: () => void;
 }
 
@@ -14,13 +24,13 @@ export default function RegisterScreen({ onBack, onRegisterSuccess, onNavigateLo
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleRegister = async () => {
     setErrorMessage(null);
 
-    // Einheitliche Prüfung über dieselbe Validator-Instanz
     const error =
       validator.validateName(firstName, 'Vorname') ||
       validator.validateName(lastName, 'Nachname') ||
@@ -34,8 +44,13 @@ export default function RegisterScreen({ onBack, onRegisterSuccess, onNavigateLo
 
     setIsLoading(true);
     try {
-      await registerUser(firstName.trim(), lastName.trim(), email.trim().toLowerCase(), password);
-      onRegisterSuccess();
+      const newUser = await registerUser(
+      firstName.trim(),
+      lastName.trim(),
+      email.trim().toLowerCase(),
+      password
+    );
+      onRegisterSuccess(newUser.id);
     } catch (err) {
       setErrorMessage('Registrierung fehlgeschlagen. E-Mail existiert bereits.');
       console.error(err);
@@ -72,13 +87,32 @@ export default function RegisterScreen({ onBack, onRegisterSuccess, onNavigateLo
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Passwort"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+
+      {/* Passwort-Feld mit Umschalter */}
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Passwort"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+        />
+        <TouchableOpacity
+          style={styles.eyeButton}
+          onPress={() => setShowPassword(!showPassword)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          {ViewIcon && ViewOffSlashIcon ? (
+            <HugeiconsIcon
+              icon={showPassword ? ViewOffSlashIcon : ViewIcon}
+              size={20}
+              color="#64748B"
+            />
+          ) : (
+            <Text style={{ fontSize: 16 }}>{showPassword ? '🙈' : '👁️'}</Text>
+          )}
+        </TouchableOpacity>
+      </View>
 
       {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
 
@@ -99,7 +133,28 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, justifyContent: 'center' },
   backButton: { alignSelf: 'flex-start', marginBottom: 20 },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 15, borderRadius: 5 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 15,
+    borderRadius: 5,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 10,
+  },
+  eyeButton: {
+    paddingHorizontal: 12,
+  },
   buttonContainer: { marginBottom: 20 },
   errorText: { color: 'red', marginBottom: 15, textAlign: 'center', fontWeight: '500' },
 });
