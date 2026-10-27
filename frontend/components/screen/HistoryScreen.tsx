@@ -46,7 +46,6 @@ export default function HistoryScreen({ userId }: HistoryScreenProps) {
 
   return (
     <View style={globalStyles.screen}>
-      {/* Header-Bereich untereinander statt nebeneinander */}
       <View style={{ marginBottom: 8 }}>
         <Text style={globalStyles.title}>Verlauf</Text>
         <Text style={globalStyles.subtitle}>
@@ -74,7 +73,6 @@ export default function HistoryScreen({ userId }: HistoryScreenProps) {
           contentContainerStyle={{ paddingBottom: 24 }}
         />
       ) : (
-        /* Leerer Zustand: sauber zentriert mit Icon */
         <View style={globalStyles.center}>
           <View
             style={[

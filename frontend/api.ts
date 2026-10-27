@@ -6,8 +6,8 @@ const REWARDS_URL = `${API_URL}/api/rewards`;
 
 const defaultHeaders = {
   'Content-Type': 'application/json',
-  'Accept': 'application/json',
-  'Bypass-Tunnel-Reminder': 'true', 
+  Accept: 'application/json',
+  'Bypass-Tunnel-Reminder': 'true',
 };
 
 export interface BackendTransaction {
@@ -43,7 +43,12 @@ export interface UserProfile {
   role: 'USER' | 'ADMIN';
 }
 
-// Auth
+export interface CartItemPayload {
+  rewardId: string;
+  quantity: number;
+}
+
+//Auth
 
 export const registerUser = async (
   firstName: string,
@@ -78,7 +83,7 @@ export const loginUser = async (email: string, password: string) => {
   return response.json();
 };
 
-// Main Functions
+//Profile & Balances
 
 export const fetchTotalQuantity = async (userId: string): Promise<number> => {
   const response = await fetch(`${TRANSACTIONS_URL}/user/${userId}/quantity`, {
@@ -162,12 +167,12 @@ export const deleteAccount = async (userId: string) => {
   }
 };
 
-export const fetchUserTransactions = async (
-  userId: string
-): Promise<BackendTransaction[]> => {
+//Transactions
+
+export const fetchUserTransactions = async (userId: string): Promise<BackendTransaction[]> => {
   const response = await fetch(`${TRANSACTIONS_URL}/user/${userId}`, {
     method: 'GET',
-    headers: defaultHeaders, // Fehlte vorher komplett
+    headers: defaultHeaders,
   });
 
   if (!response.ok) {
@@ -177,20 +182,7 @@ export const fetchUserTransactions = async (
   return await response.json();
 };
 
-export async function redeemReward(userId: string, rewardTitle: string, cost: number): Promise<BackendTransaction> {
-  const response = await fetch(`${REWARDS_URL}/redeem`, {
-    method: 'POST',
-    headers: defaultHeaders,
-    body: JSON.stringify({ userId, rewardTitle, cost }),
-  });
-
-  if (!response.ok) {
-    const errorMsg = await response.text();
-    throw new Error(errorMsg || 'Fehler beim Einlösen der Prämie');
-  }
-
-  return response.json();
-}
+//Rewards
 
 export async function fetchRewards(): Promise<Reward[]> {
   const response = await fetch(`${REWARDS_URL}`, {
@@ -235,4 +227,22 @@ export async function deleteReward(rewardId: string, adminUserId: string): Promi
     const errorText = await response.text();
     throw new Error(errorText || 'Fehler beim Löschen der Prämie');
   }
+}
+
+export async function redeemCart(
+  userId: string,
+  items: CartItemPayload[]
+): Promise<BackendTransaction> {
+  const response = await fetch(`${REWARDS_URL}/redeem-cart`, {
+    method: 'POST',
+    headers: defaultHeaders,
+    body: JSON.stringify({ userId, items }),
+  });
+
+  if (!response.ok) {
+    const errorMsg = await response.text();
+    throw new Error(errorMsg || 'Fehler beim Einlösen der Prämien');
+  }
+
+  return response.json();
 }

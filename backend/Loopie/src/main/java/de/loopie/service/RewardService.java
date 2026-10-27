@@ -1,15 +1,13 @@
 package de.loopie.service;
 
 import de.loopie.common.InsufficientBalanceException;
-import de.loopie.dto.BatchRedeemRequest;
+import de.loopie.dto.CartRedeemRequest;
 import de.loopie.dto.CreateRewardRequest;
-import de.loopie.dto.RedeemRequest;
 import de.loopie.entity.*;
 import de.loopie.repository.RewardRepository;
 import de.loopie.repository.TransactionRepository;
 import de.loopie.repository.UserRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -33,32 +31,6 @@ public class RewardService {
 
     public List<Reward> getActiveRewards() {
         return rewardRepository.findByActiveTrue();
-    }
-
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public Transaction redeemReward(RedeemRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + request.getUserId()));
-
-        if (request.getCost() <= 0) {
-            throw new IllegalArgumentException("Cost must be greater than zero.");
-        }
-
-        if (user.getBalance() < request.getCost()) {
-            throw new InsufficientBalanceException("Insufficient ReCoins balance.");
-        }
-
-        user.setBalance(user.getBalance() - request.getCost());
-        userRepository.save(user);
-
-        Transaction tx = new Transaction();
-        tx.setUser(user);
-        tx.setUnitId(request.getRewardTitle());
-        tx.setAmount(1);
-        tx.setValue(-request.getCost());
-        tx.setType(TransactionType.REDEMPTION);
-
-        return transactionRepository.save(tx);
     }
 
     @Transactional
@@ -107,39 +79,50 @@ public class RewardService {
         rewardRepository.save(reward);
     }
 
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public List<Transaction> redeemBatch(BatchRedeemRequest request) {
-        User user = userRepository.findById(request.getUserId())
+    @Transactional(rollbackFor = Exception.class)
+    public Transaction redeemCart(CartRedeemRequest request) {
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new IllegalArgumentException("Cart cannot be empty.");
+        }
+
+        User user = userRepository.findByIdForUpdate(request.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + request.getUserId()));
 
         int totalCost = 0;
-        for (BatchRedeemRequest.RedeemItemDTO item : request.getItems()) {
-            if (item.getCost() <= 0 || item.getQuantity() <= 0) {
-                throw new IllegalArgumentException("Ungültige Kosten oder Menge.");
+        int totalQuantity = 0;
+        List<String> itemSummaries = new ArrayList<>();
+
+        for (CartRedeemRequest.CartItemDTO item : request.getItems()) {
+            if (item.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Quantity must be greater than zero.");
             }
-            totalCost += (item.getCost() * item.getQuantity());
+
+            Reward reward = rewardRepository.findById(item.getRewardId())
+                    .orElseThrow(() -> new IllegalArgumentException("Reward not found: " + item.getRewardId()));
+
+            if (!reward.isActive()) {
+                throw new IllegalStateException("Reward '" + reward.getTitle() + "' is no longer active.");
+            }
+
+            totalCost += (reward.getCost() * item.getQuantity());
+            totalQuantity += item.getQuantity();
+            itemSummaries.add(item.getQuantity() + "x " + reward.getTitle());
         }
 
         if (user.getBalance() < totalCost) {
-            throw new InsufficientBalanceException("Insufficient ReCoins balance for order.");
+            throw new InsufficientBalanceException("Insufficient ReCoins balance.");
         }
 
         user.setBalance(user.getBalance() - totalCost);
         userRepository.save(user);
 
-        List<Transaction> savedTransactions = new ArrayList<>();
-        for (BatchRedeemRequest.RedeemItemDTO item : request.getItems()) {
-            for (int i = 0; i < item.getQuantity(); i++) {
-                Transaction tx = new Transaction();
-                tx.setUser(user);
-                tx.setUnitId(item.getRewardTitle());
-                tx.setAmount(1);
-                tx.setValue(-item.getCost());
-                tx.setType(TransactionType.REDEMPTION);
-                savedTransactions.add(transactionRepository.save(tx));
-            }
-        }
+        Transaction tx = new Transaction();
+        tx.setUser(user);
+        tx.setAmount(totalQuantity);
+        tx.setValue(-totalCost);
+        tx.setUnitId(String.join(", ", itemSummaries));
+        tx.setType(TransactionType.REDEMPTION);
 
-        return savedTransactions;
+        return transactionRepository.save(tx);
     }
 }

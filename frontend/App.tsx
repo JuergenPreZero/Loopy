@@ -102,21 +102,21 @@ export default function App() {
   }
 
   const renderContent = () => {
-    switch (activePage) {
-      case 1: 
-        return <HomeScreen userId={currentUserId} />;
-      case 2: 
-        return <HistoryScreen userId={currentUserId} />;
-      case 3: 
-        return <QrScreen userId={currentUserId} />;
-      case 4: 
-        return <ShopScreen userId={currentUserId} />;
-      case 5: 
-        return <ProfileScreen userId={currentUserId} onLogout={handleLogout} />;
-      default: 
-        return <HomeScreen userId={currentUserId} />;
-    }
-  };
+  switch (activePage) {
+    case 1: 
+      return <HomeScreen userId={currentUserId} setActivePage={setActivePage} />;
+    case 2:
+      return <HistoryScreen userId={currentUserId} />;
+    case 3: 
+      return <QrScreen userId={currentUserId} />;
+    case 4: 
+      return <ShopScreen userId={currentUserId} />;
+    case 5: 
+      return <ProfileScreen userId={currentUserId} onLogout={handleLogout} />;
+    default: 
+      return <HomeScreen userId={currentUserId} setActivePage={setActivePage} />;
+  }
+};
 
   return (
     <SafeAreaProvider>

@@ -16,20 +16,15 @@ export default function TransactionItem({ itemType, amount, value, date }: Trans
     try {
       const isoString = rawDate.replace(' ', 'T');
       const d = new Date(isoString);
+      if (isNaN(d.getTime())) return rawDate.substring(0, 16);
 
-      if (isNaN(d.getTime())) {
-        return rawDate.substring(0, 16);
-      }
-
-      const formatted = d.toLocaleDateString('de-DE', {
+      return `${d.toLocaleDateString('de-DE', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-      });
-
-      return `${formatted} Uhr`;
+      })} Uhr`;
     } catch {
       return rawDate;
     }
@@ -38,9 +33,13 @@ export default function TransactionItem({ itemType, amount, value, date }: Trans
   return (
     <View style={styles.card}>
       <View style={styles.leftCol}>
-        <Text style={styles.itemName}>{itemType}</Text>
+        <Text style={styles.itemName} numberOfLines={2}>
+          {itemType}
+        </Text>
         <Text style={styles.itemAmount}>
-          {isPositive ? `${amount} Stück abgegeben` : `Prämie eingelöst`}
+          {isPositive
+            ? `${amount} Stück abgegeben`
+            : `${amount} ${amount === 1 ? 'Prämie' : 'Prämien'} eingelöst`}
         </Text>
         {date ? <Text style={styles.itemDate}>{formatShortDate(date)}</Text> : null}
       </View>

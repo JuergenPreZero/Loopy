@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import { QrCodeIcon, Location04Icon } from '@hugeicons/core-free-icons';
+import { QrCodeIcon, ShoppingBag01Icon } from '@hugeicons/core-free-icons';
 import { useUser } from '../UserContext';
 import { globalStyles, colors } from '../../theme';
 
@@ -85,7 +85,7 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
       </View>
 
       <View style={globalStyles.row}>
-        {/* Stationen (selbe Farbe wie QR-Code) */}
+        {/* Navigiert zu Seite 4 (Prämien-Shop) */}
         <TouchableOpacity
           style={[
             globalStyles.button,
@@ -96,15 +96,16 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
               justifyContent: 'center',
             },
           ]}
+          onPress={() => setActivePage?.(4)}
           activeOpacity={0.8}
         >
-          {Location04Icon ? (
-            <HugeiconsIcon icon={Location04Icon} size={18} color="#FFFFFF" />
+          {ShoppingBag01Icon ? (
+            <HugeiconsIcon icon={ShoppingBag01Icon} size={18} color="#FFFFFF" />
           ) : null}
-          <Text style={[globalStyles.buttonText, { marginLeft: 8 }]}>Stationen</Text>
+          <Text style={[globalStyles.buttonText, { marginLeft: 8 }]}>Prämien</Text>
         </TouchableOpacity>
 
-        {/* QR-Code Navigation zur Seite 3 */}
+        {/* Navigiert zu Seite 3 (QR-Code) */}
         <TouchableOpacity
           style={[
             globalStyles.button,
@@ -115,7 +116,7 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
               justifyContent: 'center',
             },
           ]}
-          onPress={() => setActivePage && setActivePage(3)}
+          onPress={() => setActivePage?.(3)}
           activeOpacity={0.8}
         >
           {QrCodeIcon ? (

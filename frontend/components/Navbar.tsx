@@ -6,7 +6,7 @@ import {
   UserIcon,
   QrCodeIcon,
   HistoryIcon,
-  Location04Icon,
+  ShoppingBag01Icon,
 } from '@hugeicons/core-free-icons';
 import { colors } from '../theme';
 
@@ -29,6 +29,7 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
         alignItems: 'center',
       }}
     >
+      {/* 1: Home */}
       <TouchableOpacity
         style={{ padding: 10, alignItems: 'center', justifyContent: 'center' }}
         onPress={() => setActivePage(1)}
@@ -52,6 +53,7 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
         />
       </TouchableOpacity>
 
+      {/* 3: QR-Code */}
       <TouchableOpacity
         style={{
           width: 52,
@@ -72,17 +74,19 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
         />
       </TouchableOpacity>
 
+      {/* 4: Shop / Rewards */}
       <TouchableOpacity
         style={{ padding: 10, alignItems: 'center', justifyContent: 'center' }}
         onPress={() => setActivePage(4)}
       >
         <HugeiconsIcon
-          icon={Location04Icon}
+          icon={ShoppingBag01Icon}
           size={24}
           color={activePage === 4 ? colors.primary : colors.textMuted}
         />
       </TouchableOpacity>
 
+      {/* 5: Profile */}
       <TouchableOpacity
         style={{ padding: 10, alignItems: 'center', justifyContent: 'center' }}
         onPress={() => setActivePage(5)}

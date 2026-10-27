@@ -1,8 +1,7 @@
 package de.loopie.controller;
 
-import de.loopie.dto.BatchRedeemRequest;
+import de.loopie.dto.CartRedeemRequest;
 import de.loopie.dto.CreateRewardRequest;
-import de.loopie.dto.RedeemRequest;
 import de.loopie.entity.Reward;
 import de.loopie.entity.Transaction;
 import de.loopie.service.RewardService;
@@ -28,14 +27,9 @@ public class RewardController {
         return ResponseEntity.ok(rewardService.getActiveRewards());
     }
 
-    @PostMapping("/redeem")
-    public ResponseEntity<Transaction> redeemReward(@RequestBody RedeemRequest request) {
-        return ResponseEntity.ok(rewardService.redeemReward(request));
-    }
-
-    @PostMapping("/redeem-batch")
-    public ResponseEntity<List<Transaction>> redeemBatch(@RequestBody BatchRedeemRequest request) {
-        return ResponseEntity.ok(rewardService.redeemBatch(request));
+    @PostMapping("/redeem-cart")
+    public ResponseEntity<Transaction> redeemCart(@RequestBody CartRedeemRequest request) {
+        return ResponseEntity.ok(rewardService.redeemCart(request));
     }
 
     @PostMapping
