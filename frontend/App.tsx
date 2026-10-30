@@ -14,53 +14,55 @@ import RegisterScreen from './components/auth/RegisterScreen';
 import HistoryScreen from './components/screen/HistoryScreen';
 import ShopScreen from './components/screen/ShopScreen';
 import { UserProvider } from './components/UserContext';
+import { setAuthToken } from './api';
 
-const USER_STORAGE_KEY = '@loopie_user_id';
-
-
+const TOKEN_STORAGE_KEY = '@loopie_jwt_token';
 
 export default function App() {
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [authPage, setAuthPage] = useState('landing');
-  const [activePage, setActivePage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [authPage, setAuthPage] = useState<'landing' | 'login' | 'register'>('landing');
+  const [activePage, setActivePage] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => { 
-    const checkSavedUser = async () => {
+    const checkSavedSession = async () => {
       try {
-        const savedUserId = await AsyncStorage.getItem(USER_STORAGE_KEY);
-        if (savedUserId) {
-          setCurrentUserId(savedUserId);
+        const savedToken = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+        if (savedToken) {
+          setAuthToken(savedToken);
+          setIsAuthenticated(true);
         }
       } catch (error) {
-        console.error("Fehler beim Laden des gespeicherten Nutzers:", error);
+        console.error('Fehler beim Laden der Session:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkSavedUser();
+    checkSavedSession();
   }, []);
 
-  const handleLoginSuccess = async (userId: string, rememberMe: boolean) => {
+  const handleLoginSuccess = async (token: string, rememberMe: boolean) => {
     try {
+      setAuthToken(token);
       if (rememberMe) {
-        await AsyncStorage.setItem(USER_STORAGE_KEY, userId);
+        await AsyncStorage.setItem(TOKEN_STORAGE_KEY, token);
       }
-      setCurrentUserId(userId);
+      setIsAuthenticated(true);
     } catch (error) {
-      console.error("Fehler beim Verarbeiten des Logins:", error);
+      console.error('Fehler beim Speichern der Session:', error);
     }
   };
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem(USER_STORAGE_KEY);
-      setCurrentUserId(null);
+      setAuthToken(null);
+      await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+      setIsAuthenticated(false);
       setActivePage(1);
       setAuthPage('landing');
     } catch (error) {
-      console.error("Fehler beim Abmelden:", error);
+      console.error('Fehler beim Abmelden:', error);
     }
   };
 
@@ -72,7 +74,7 @@ export default function App() {
     );
   }
 
-  if (!currentUserId) {
+  if (!isAuthenticated) {
     return (
       <SafeAreaProvider>
         <SafeAreaView style={styles.container}>
@@ -85,14 +87,14 @@ export default function App() {
           {authPage === 'login' && (
             <LoginScreen 
               onBack={() => setAuthPage('landing')}
-              onLoginSuccess={handleLoginSuccess} 
+              onLoginSuccess={(token, rememberMe) => handleLoginSuccess(token, rememberMe)} 
               onNavigateRegister={() => setAuthPage('register')}
             />
           )}
           {authPage === 'register' && (
             <RegisterScreen 
               onBack={() => setAuthPage('landing')}
-              onRegisterSuccess={(userId) => handleLoginSuccess(userId, true)} 
+              onRegisterSuccess={(token) => handleLoginSuccess(token, true)} 
               onNavigateLogin={() => setAuthPage('login')}
             />
           )}
@@ -102,27 +104,21 @@ export default function App() {
   }
 
   const renderContent = () => {
-  switch (activePage) {
-    case 1: 
-      return <HomeScreen userId={currentUserId} setActivePage={setActivePage} />;
-    case 2:
-      return <HistoryScreen userId={currentUserId} />;
-    case 3: 
-      return <QrScreen userId={currentUserId} />;
-    case 4: 
-      return <ShopScreen userId={currentUserId} />;
-    case 5: 
-      return <ProfileScreen userId={currentUserId} onLogout={handleLogout} />;
-    default: 
-      return <HomeScreen userId={currentUserId} setActivePage={setActivePage} />;
-  }
-};
+    switch (activePage) {
+      case 1: return <HomeScreen setActivePage={setActivePage} />;
+      case 2: return <HistoryScreen />;
+      case 3: return <QrScreen />;
+      case 4: return <ShopScreen />;
+      case 5: return <ProfileScreen onLogout={handleLogout} />;
+      default: return <HomeScreen setActivePage={setActivePage} />;
+    }
+  };
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        <UserProvider userId={currentUserId}>
-          <Header userId={currentUserId} />
+        <UserProvider>
+          <Header />
           <View style={styles.content}>
             {renderContent()}
           </View>

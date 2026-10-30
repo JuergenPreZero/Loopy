@@ -1,45 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { getUserData } from '../../api';
+import { useUser } from '../UserContext';
 import { globalStyles, colors } from '../../theme';
 
-interface QrScreenProps {
-  userId: string;
-}
+export default function QrScreen() {
+  const { user, isInitialLoading } = useUser();
 
-export default function QrScreen({ userId }: QrScreenProps) {
-  const [publicId, setPublicId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchUserData = async () => {
-      try {
-        if (!userId) return;
-        const data = await getUserData(userId);
-        if (isMounted) {
-          if (data?.publicId) {
-            setPublicId(data.publicId);
-          } else {
-            setError('Keine gültige Public-ID gefunden.');
-          }
-        }
-      } catch (err) {
-        if (isMounted) setError('Fehler beim Laden des QR-Codes.');
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-    return () => {
-      isMounted = false;
-    };
-  }, [userId]);
-
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
       <View style={globalStyles.center}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -47,11 +15,13 @@ export default function QrScreen({ userId }: QrScreenProps) {
     );
   }
 
-  if (error || !publicId) {
+  const publicId = user?.publicId;
+
+  if (!publicId) {
     return (
       <View style={globalStyles.center}>
         <Text style={[globalStyles.subtitle, { color: colors.danger, textAlign: 'center' }]}>
-          {error || 'Code nicht verfügbar.'}
+          Code nicht verfügbar.
         </Text>
       </View>
     );

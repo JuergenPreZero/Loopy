@@ -1,11 +1,13 @@
 package de.loopie.controller;
 
+import de.loopie.config.jwt.UserPrincipal;
 import de.loopie.dto.CartRedeemRequest;
 import de.loopie.dto.CreateRewardRequest;
 import de.loopie.entity.Reward;
 import de.loopie.entity.Transaction;
 import de.loopie.service.RewardService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,7 +15,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/rewards")
-@CrossOrigin(origins = "*")
 public class RewardController {
 
     private final RewardService rewardService;
@@ -28,8 +29,10 @@ public class RewardController {
     }
 
     @PostMapping("/redeem-cart")
-    public ResponseEntity<Transaction> redeemCart(@RequestBody CartRedeemRequest request) {
-        return ResponseEntity.ok(rewardService.redeemCart(request));
+    public ResponseEntity<Transaction> redeemCart(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestBody CartRedeemRequest request) {
+        return ResponseEntity.ok(rewardService.redeemCart(principal.getId(), request));
     }
 
     @PostMapping
@@ -38,10 +41,8 @@ public class RewardController {
     }
 
     @DeleteMapping("/{rewardId}")
-    public ResponseEntity<Void> deleteReward(
-            @PathVariable UUID rewardId,
-            @RequestParam UUID adminUserId) {
-        rewardService.deleteReward(rewardId, adminUserId);
+    public ResponseEntity<Void> deleteReward(@PathVariable UUID rewardId) {
+        rewardService.deleteReward(rewardId);
         return ResponseEntity.noContent().build();
     }
 }

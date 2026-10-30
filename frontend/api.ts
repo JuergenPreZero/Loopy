@@ -1,14 +1,45 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const API_URL = 'http://localhost:8080';
 const AUTH_BASE_URL = `${API_URL}/api/auth`;
 const USERS_URL = `${API_URL}/api/users`;
 const TRANSACTIONS_URL = `${API_URL}/api/transactions`;
 const REWARDS_URL = `${API_URL}/api/rewards`;
 
-const defaultHeaders = {
-  'Content-Type': 'application/json',
-  Accept: 'application/json',
-  'Bypass-Tunnel-Reminder': 'true',
+const TOKEN_STORAGE_KEY = '@loopie_jwt_token';
+
+let authToken: string | null = null;
+
+export const setAuthToken = (token: string | null) => {
+  authToken = token;
 };
+
+export const getAuthToken = async (): Promise<string | null> => {
+  if (!authToken) {
+    authToken = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+  }
+  return authToken;
+};
+
+const getHeaders = async () => {
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
+};
+
+// Interfaces
+export interface AuthResponse {
+  token: string;
+  user: UserProfile;
+}
 
 export interface BackendTransaction {
   id: number;
@@ -48,164 +79,111 @@ export interface CartItemPayload {
   quantity: number;
 }
 
-//Auth
+// --- Auth ---
 
 export const registerUser = async (
   firstName: string,
   lastName: string,
   email: string,
   password: string
-) => {
+): Promise<AuthResponse> => {
   const response = await fetch(`${AUTH_BASE_URL}/register`, {
     method: 'POST',
-    headers: defaultHeaders,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ firstName, lastName, email, password }),
   });
 
-  if (!response.ok) {
-    throw new Error('Fehler bei der Registrierung');
-  }
-
-  return response.json();
+  if (!response.ok) throw new Error('Fehler bei der Registrierung');
+  const data: AuthResponse = await response.json();
+  setAuthToken(data.token);
+  return data;
 };
 
-export const loginUser = async (email: string, password: string) => {
+export const loginUser = async (email: string, password: string): Promise<AuthResponse> => {
   const response = await fetch(`${AUTH_BASE_URL}/login`, {
     method: 'POST',
-    headers: defaultHeaders,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
 
+  if (!response.ok) throw new Error('Fehler bei dem Login. Bitte überprüfe deine Daten.');
+  const data: AuthResponse = await response.json();
+  setAuthToken(data.token);
+  return data;
+};
+
+// --- Profile & Balances (/me endpoints) ---
+
+export const fetchTotalQuantity = async (): Promise<number> => {
+  const headers = await getHeaders();
+  const response = await fetch(`${TRANSACTIONS_URL}/me/quantity`, { method: 'GET', headers });
+  if (!response.ok) throw new Error('Fehler beim Aufruf der Menge');
+  return response.json();
+};
+
+export const fetchUserBalance = async (): Promise<number> => {
+  const headers = await getHeaders();
+  const response = await fetch(`${TRANSACTIONS_URL}/me/balance`, { method: 'GET', headers });
+  if (!response.ok) throw new Error('Fehler beim Aufruf des Kontostands');
+  return response.json();
+};
+
+export const getUserData = async (): Promise<UserProfile> => {
+  const headers = await getHeaders();
+  const response = await fetch(`${USERS_URL}/me`, { method: 'GET', headers });
+  if (!response.ok) throw new Error('Fehler beim Abrufen der Nutzerdaten');
+  return response.json();
+};
+
+export const updateUserProfile = async (data: UpdateUserData): Promise<UserProfile> => {
+  const headers = await getHeaders();
+  const response = await fetch(`${USERS_URL}/me`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(data),
+  });
+
   if (!response.ok) {
-    throw new Error('Fehler bei dem Login bitte überprüf die Daten.');
+    const errorText = await response.text();
+    throw new Error(errorText || 'Fehler beim Aktualisieren der Nutzerdaten');
   }
 
   return response.json();
 };
 
-//Profile & Balances
+export const deleteAccount = async (): Promise<boolean> => {
+  const headers = await getHeaders();
+  const response = await fetch(`${USERS_URL}/me`, { method: 'DELETE', headers });
+  if (!response.ok) throw new Error('Fehler beim Löschen des Kontos');
+  return true;
+};
 
-export const fetchTotalQuantity = async (userId: string): Promise<number> => {
-  const response = await fetch(`${TRANSACTIONS_URL}/user/${userId}/quantity`, {
-    method: 'GET',
-    headers: defaultHeaders,
-  });
-
-  if (!response.ok) {
-    throw new Error('Fehler beim Aufruf der Menge');
-  }
-
+export const fetchUserTransactions = async (): Promise<BackendTransaction[]> => {
+  const headers = await getHeaders();
+  const response = await fetch(`${TRANSACTIONS_URL}/me`, { method: 'GET', headers });
+  if (!response.ok) throw new Error('Fehler beim Laden der Transaktionen');
   return response.json();
 };
 
-export const fetchUserBalance = async (userId: string): Promise<number> => {
-  const response = await fetch(`${TRANSACTIONS_URL}/user/${userId}/balance`, {
-    method: 'GET',
-    headers: defaultHeaders,
-  });
-
-  if (!response.ok) {
-    throw new Error('Fehler beim Aufruf des Geldbetrags');
-  }
-
-  return response.json();
-};
-
-export const getUserData = async (userId: string) => {
-  try {
-    const response = await fetch(`${USERS_URL}/${userId}`, {
-      method: 'GET',
-      headers: defaultHeaders,
-    });
-
-    if (!response.ok) {
-      throw new Error('Fehler beim Abrufen der Nutzerdaten');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error in getUserData:', error);
-    throw error;
-  }
-};
-
-export const updateUserProfile = async (userId: string, data: UpdateUserData) => {
-  try {
-    const response = await fetch(`${USERS_URL}/${userId}`, {
-      method: 'PUT',
-      headers: defaultHeaders,
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Fehler beim Aktualisieren der Nutzerdaten');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error in updateUserProfile:', error);
-    throw error;
-  }
-};
-
-export const deleteAccount = async (userId: string) => {
-  try {
-    const response = await fetch(`${USERS_URL}/${userId}`, {
-      method: 'DELETE',
-      headers: defaultHeaders,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Fehler beim Löschen des Kontos (Status: ${response.status})`);
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error in deleteAccount:', error);
-    throw error;
-  }
-};
-
-//Transactions
-
-export const fetchUserTransactions = async (userId: string): Promise<BackendTransaction[]> => {
-  const response = await fetch(`${TRANSACTIONS_URL}/user/${userId}`, {
-    method: 'GET',
-    headers: defaultHeaders,
-  });
-
-  if (!response.ok) {
-    throw new Error('Fehler beim Laden der Transaktionen');
-  }
-
-  return await response.json();
-};
-
-//Rewards
+// --- Rewards ---
 
 export async function fetchRewards(): Promise<Reward[]> {
-  const response = await fetch(`${REWARDS_URL}`, {
-    method: 'GET',
-    headers: defaultHeaders,
-  });
-
-  if (!response.ok) {
-    throw new Error('Fehler beim Laden der Prämien');
-  }
+  const headers = await getHeaders();
+  const response = await fetch(`${REWARDS_URL}`, { method: 'GET', headers });
+  if (!response.ok) throw new Error('Fehler beim Laden der Prämien');
   return response.json();
 }
 
 export async function createReward(payload: {
-  adminUserId: string;
   title: string;
   partnerName: string;
   cost: number;
   description?: string;
 }): Promise<Reward> {
+  const headers = await getHeaders();
   const response = await fetch(`${REWARDS_URL}`, {
     method: 'POST',
-    headers: defaultHeaders,
+    headers,
     body: JSON.stringify(payload),
   });
 
@@ -217,26 +195,18 @@ export async function createReward(payload: {
   return response.json();
 }
 
-export async function deleteReward(rewardId: string, adminUserId: string): Promise<void> {
-  const response = await fetch(`${REWARDS_URL}/${rewardId}?adminUserId=${adminUserId}`, {
-    method: 'DELETE',
-    headers: defaultHeaders,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || 'Fehler beim Löschen der Prämie');
-  }
+export async function deleteReward(rewardId: string): Promise<void> {
+  const headers = await getHeaders();
+  const response = await fetch(`${REWARDS_URL}/${rewardId}`, { method: 'DELETE', headers });
+  if (!response.ok) throw new Error('Fehler beim Löschen der Prämie');
 }
 
-export async function redeemCart(
-  userId: string,
-  items: CartItemPayload[]
-): Promise<BackendTransaction> {
+export async function redeemCart(items: CartItemPayload[]): Promise<BackendTransaction> {
+  const headers = await getHeaders();
   const response = await fetch(`${REWARDS_URL}/redeem-cart`, {
     method: 'POST',
-    headers: defaultHeaders,
-    body: JSON.stringify({ userId, items }),
+    headers,
+    body: JSON.stringify({ items }),
   });
 
   if (!response.ok) {

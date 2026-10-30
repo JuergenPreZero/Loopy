@@ -16,11 +16,10 @@ import { globalStyles, colors } from '../../theme';
 const EditIconComponent = Edit02Icon || PencilEdit02Icon;
 
 interface ProfileScreenProps {
-  userId: string;
   onLogout: () => void;
 }
 
-export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) {
+export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -45,13 +44,8 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
     let isMounted = true;
 
     const loadProfile = async () => {
-      if (!userId) {
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const data = await getUserData(userId);
+        const data = await getUserData();
         if (isMounted && data) {
           const loadedFirst = data.firstName || '';
           const loadedLast = data.lastName || '';
@@ -80,7 +74,7 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, []);
 
   const hasChanges = Boolean(
     originalUser &&
@@ -108,7 +102,7 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
 
     setIsSaving(true);
     try {
-      await updateUserProfile(userId, {
+      await updateUserProfile({
         firstName: trimmedFirst,
         lastName: trimmedLast,
         email: normalizedEmail,
@@ -134,7 +128,7 @@ export default function ProfileScreen({ userId, onLogout }: ProfileScreenProps) 
 
   const confirmAndDelete = async () => {
     try {
-      await deleteAccount(userId);
+      await deleteAccount();
       onLogout();
     } catch {
       alert('Konto konnte nicht gelöscht werden.');

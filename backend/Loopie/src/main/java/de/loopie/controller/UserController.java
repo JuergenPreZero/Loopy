@@ -1,16 +1,15 @@
 package de.loopie.controller;
 
+import de.loopie.config.jwt.UserPrincipal;
 import de.loopie.dto.UpdateUserRequest;
 import de.loopie.dto.UserResponseDTO;
 import de.loopie.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*")
 public class UserController {
 
     private final UserService userService;
@@ -19,21 +18,21 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<UserResponseDTO> getUser(@PathVariable UUID userId) {
-        return ResponseEntity.ok(userService.getUserProfile(userId));
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getCurrentUser(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(userService.getUserProfile(principal.getId()));
     }
 
-    @PutMapping("/{userId}")
-    public ResponseEntity<UserResponseDTO> updateUser(
-            @PathVariable UUID userId,
+    @PutMapping("/me")
+    public ResponseEntity<UserResponseDTO> updateCurrentUser(
+            @AuthenticationPrincipal UserPrincipal principal,
             @RequestBody UpdateUserRequest request) {
-        return ResponseEntity.ok(userService.updateUserProfile(userId, request));
+        return ResponseEntity.ok(userService.updateUserProfile(principal.getId(), request));
     }
 
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID userId) {
-        userService.deleteUserById(userId);
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteCurrentUser(@AuthenticationPrincipal UserPrincipal principal) {
+        userService.deleteUserById(principal.getId());
         return ResponseEntity.noContent().build();
     }
 }

@@ -1,5 +1,7 @@
 package de.loopie.service;
 
+import de.loopie.config.jwt.JwtService;
+import de.loopie.dto.AuthResponseDTO;
 import de.loopie.dto.LoginRequest;
 import de.loopie.dto.RegisterRequest;
 import de.loopie.dto.UserResponseDTO;
@@ -8,41 +10,34 @@ import de.loopie.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.authentication.BadCredentialsException;
 
 import java.security.SecureRandom;
 import java.util.Locale;
 
-/**
- * Service managing user authentication, registration, and credential verification.
- */
 @Service
 public class AuthService {
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    //Character pool for generating public IDs
     private static final String CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final int PUBLIC_ID_LENGTH = 8;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
-    /**
-     * Registers a new user account with normalized email, encrypted password, and a unique 8-character public ID.
-     *
-     * @param request data transfer object containing registration details
-     * @return the newly created user as a {@link UserResponseDTO}
-     */
     @Transactional
-    public UserResponseDTO registerUser(RegisterRequest request) {
+    public AuthResponseDTO registerUser(RegisterRequest request) {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
         if (userRepository.findByEmail(normalizedEmail).isPresent()) {
             throw new IllegalArgumentException("This E-mail already exists");
         }
-
         if (request.getPassword().length() < 8) {
             throw new IllegalArgumentException("Password too short");
         }
@@ -57,27 +52,24 @@ public class AuthService {
         do {
             generatedPublicId = generatePublicId();
         } while (userRepository.existsByPublicId(generatedPublicId));
-
         newUser.setPublicId(generatedPublicId);
 
         User savedUser = userRepository.save(newUser);
-        return new UserResponseDTO(savedUser);
+        String token = jwtService.generateToken(savedUser);
+
+        return new AuthResponseDTO(token, new UserResponseDTO(savedUser));
     }
 
-    /**
-     * Authenticates an existing user against stored credentials.
-     *
-     * @param request data transfer object containing login email and raw password
-     * @return the authenticated user as a {@link UserResponseDTO}
-     */
-    public UserResponseDTO login(LoginRequest request) {
+    public AuthResponseDTO login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail().trim().toLowerCase(Locale.ROOT))
-                .orElseThrow(() -> new IllegalArgumentException("Invalid E-Mail or Password."));
+                .orElseThrow(() -> new BadCredentialsException("Invalid E-Mail or Password."));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("Invalid E-Mail or Password.");
+            throw new BadCredentialsException("Invalid E-Mail or Password.");
         }
-        return new UserResponseDTO(user);
+
+        String token = jwtService.generateToken(user);
+        return new AuthResponseDTO(token, new UserResponseDTO(user));
     }
 
     private String generatePublicId() {

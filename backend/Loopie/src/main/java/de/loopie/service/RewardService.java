@@ -35,13 +35,6 @@ public class RewardService {
 
     @Transactional
     public Reward createReward(CreateRewardRequest request) {
-        User user = userRepository.findById(request.getAdminUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found."));
-
-        if (user.getRole() != Role.ADMIN) {
-            throw new IllegalArgumentException("Access denied: Only administrators can create rewards.");
-        }
-
         if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
             throw new IllegalArgumentException("Title must not be empty.");
         }
@@ -64,19 +57,59 @@ public class RewardService {
     }
 
     @Transactional
-    public void deleteReward(UUID rewardId, UUID adminUserId) {
-        User admin = userRepository.findById(adminUserId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found."));
-
-        if (admin.getRole() != Role.ADMIN) {
-            throw new IllegalArgumentException("Access denied: Only administrators can delete rewards.");
-        }
-
+    public void deleteReward(UUID rewardId) {
         Reward reward = rewardRepository.findById(rewardId)
                 .orElseThrow(() -> new IllegalArgumentException("Reward does not exist."));
 
         reward.setActive(false);
         rewardRepository.save(reward);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Transaction redeemCart(UUID authenticatedUserId, CartRedeemRequest request) {
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new IllegalArgumentException("Cart cannot be empty.");
+        }
+
+        User user = userRepository.findByIdForUpdate(authenticatedUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + authenticatedUserId));
+
+        int totalCost = 0;
+        int totalQuantity = 0;
+        List<String> itemSummaries = new ArrayList<>();
+
+        for (CartRedeemRequest.CartItemDTO item : request.getItems()) {
+            if (item.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Quantity must be greater than zero.");
+            }
+
+            Reward reward = rewardRepository.findById(item.getRewardId())
+                    .orElseThrow(() -> new IllegalArgumentException("Reward not found: " + item.getRewardId()));
+
+            if (!reward.isActive()) {
+                throw new IllegalStateException("Reward '" + reward.getTitle() + "' is no longer active.");
+            }
+
+            totalCost += (reward.getCost() * item.getQuantity());
+            totalQuantity += item.getQuantity();
+            itemSummaries.add(item.getQuantity() + "x " + reward.getTitle());
+        }
+
+        if (user.getBalance() < totalCost) {
+            throw new InsufficientBalanceException("Insufficient ReCoins balance.");
+        }
+
+        user.setBalance(user.getBalance() - totalCost);
+        userRepository.save(user);
+
+        Transaction tx = new Transaction();
+        tx.setUser(user);
+        tx.setAmount(totalQuantity);
+        tx.setValue(-totalCost);
+        tx.setUnitId(String.join(", ", itemSummaries));
+        tx.setType(TransactionType.REDEMPTION);
+
+        return transactionRepository.save(tx);
     }
 
     @Transactional(rollbackFor = Exception.class)

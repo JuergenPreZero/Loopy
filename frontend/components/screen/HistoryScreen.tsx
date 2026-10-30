@@ -8,41 +8,28 @@ interface HistoryScreenProps {
   userId: string;
 }
 
-export default function HistoryScreen({ userId }: HistoryScreenProps) {
+export default function HistoryScreen() {
   const [transactions, setTransactions] = useState<BackendTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadTransactions = async (isInitial = false) => {
-      if (!userId) return;
-      if (isInitial) setIsLoading(true);
-
+    const loadTransactions = async () => {
       try {
-        const data = await fetchUserTransactions(userId);
-        if (isMounted) {
-          setTransactions(data);
-        }
+        const data = await fetchUserTransactions();
+        if (isMounted) setTransactions(data);
       } catch (error) {
         console.error('Fehler beim Abrufen der Transaktionen:', error);
       } finally {
-        if (isInitial && isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     };
 
-    loadTransactions(true);
-    const intervalId = setInterval(() => {
-      loadTransactions(false);
-    }, 4000);
+    loadTransactions();
 
-    return () => {
-      isMounted = false;
-      clearInterval(intervalId);
-    };
-  }, [userId]);
+    return () => { isMounted = false; };
+  }, []);
 
   return (
     <View style={globalStyles.screen}>

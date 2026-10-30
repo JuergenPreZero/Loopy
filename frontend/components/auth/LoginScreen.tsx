@@ -14,7 +14,7 @@ import { loginUser } from '../../api';
 
 interface LoginScreenProps {
   onBack: () => void;
-  onLoginSuccess: (userId: string, rememberMe: boolean) => void;
+  onLoginSuccess: (token: string, rememberMe: boolean) => void;
   onNavigateRegister: () => void;
 }
 
@@ -44,8 +44,8 @@ export default function LoginScreen({ onBack, onLoginSuccess, onNavigateRegister
 
     setIsLoading(true);
     try {
-      const user = await loginUser(email.trim(), password);
-      onLoginSuccess(user.id, rememberMe);
+      const authData = await loginUser(email.trim(), password);
+      onLoginSuccess(authData.token, rememberMe);
     } catch (error) {
       setErrorMessage('Login fehlgeschlagen. Überprüfe deine E-Mail oder das Passwort.');
       console.error(error);

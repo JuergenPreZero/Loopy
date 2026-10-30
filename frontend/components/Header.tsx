@@ -1,30 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { View, Text, StatusBar } from 'react-native';
-import { fetchUserBalance } from '../api';
+import { useUser } from './UserContext';
 import { colors } from '../theme';
 
-interface HeaderProps {
-  userId: string;
-}
-
-export default function Header({ userId }: HeaderProps) {
-  const [balance, setBalance] = useState<number>(0);
-
-  const loadBalance = useCallback(async () => {
-    if (!userId) return;
-    try {
-      const current = await fetchUserBalance(userId);
-      setBalance(current);
-    } catch (error) {
-      console.error('Error fetching balance:', error);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    loadBalance();
-    const interval = setInterval(loadBalance, 5000);
-    return () => clearInterval(interval);
-  }, [loadBalance]);
+export default function Header() {
+  const { balance } = useUser();
 
   return (
     <>
