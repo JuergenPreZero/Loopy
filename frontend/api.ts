@@ -112,7 +112,7 @@ export const loginUser = async (email: string, password: string): Promise<AuthRe
   return data;
 };
 
-// --- Profile & Balances (/me endpoints) ---
+// --- Profile & Balances --
 
 export const fetchTotalQuantity = async (): Promise<number> => {
   const headers = await getHeaders();
@@ -125,6 +125,13 @@ export const fetchUserBalance = async (): Promise<number> => {
   const headers = await getHeaders();
   const response = await fetch(`${TRANSACTIONS_URL}/me/balance`, { method: 'GET', headers });
   if (!response.ok) throw new Error('Fehler beim Aufruf des Kontostands');
+  return response.json();
+};
+
+export const fetchEarnedCoins = async (): Promise<number> => {
+  const headers = await getHeaders();
+  const response = await fetch(`${TRANSACTIONS_URL}/me/earned-coins`, { method: 'GET', headers });
+  if (!response.ok) throw new Error('Fehler beim Aufruf der verdienten Coins');
   return response.json();
 };
 

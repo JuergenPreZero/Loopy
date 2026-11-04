@@ -15,7 +15,7 @@ import { validator } from '../auth/UserValidator';
 
 interface RegisterScreenProps {
   onBack: () => void;
-  onRegisterSuccess: (userId: string, token: string) => void;
+  onRegisterSuccess: (token: string, userId: string) => void;
   onNavigateLogin: () => void;
 }
 
@@ -50,7 +50,7 @@ export default function RegisterScreen({ onBack, onRegisterSuccess, onNavigateLo
       email.trim().toLowerCase(),
       password
     );
-      onRegisterSuccess(authData.user.id, authData.token);
+      onRegisterSuccess(authData.token, authData.user.id);
     } catch (err) {
       setErrorMessage('Registrierung fehlgeschlagen. E-Mail existiert bereits.');
       console.error(err);

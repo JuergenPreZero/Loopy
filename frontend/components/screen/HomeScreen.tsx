@@ -28,11 +28,11 @@ interface HomeScreenProps {
 const STORE_ADDRESS = 'Gerberstraße 19, 74072 Heilbronn';
 
 export default function HomeScreen({ setActivePage }: HomeScreenProps) {
-  const { user, totalQuantity, isInitialLoading, refreshData } = useUser();
+  const { user, totalQuantity, earnedCoins, isInitialLoading, refreshData } = useUser();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showStoresModal, setShowStoresModal] = useState(false);
 
-  // Animationswert für das Hochgleiten der Karte
+
   const slideAnim = useRef(new Animated.Value(600)).current;
 
   const openStoresModal = () => {
@@ -87,7 +87,6 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
   }
 
   const firstName = user?.firstName || 'du';
-  const estimatedCoins = totalQuantity * 35;
   const co2Saved = (totalQuantity * 0.42).toFixed(1);
 
   return (
@@ -121,7 +120,7 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
         <View style={[globalStyles.card, { flex: 1, marginRight: 6, marginBottom: 0 }]}>
           <Text style={[globalStyles.subtitle, { marginBottom: 4, fontSize: 13 }]}>Coins verdient</Text>
           <Text style={{ fontSize: 22, fontWeight: '700', color: colors.primary }}>
-            {estimatedCoins}
+            {earnedCoins}
           </Text>
           <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>ReCoins gesammelt</Text>
         </View>

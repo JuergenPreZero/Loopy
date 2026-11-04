@@ -35,6 +35,11 @@ public class TransactionController {
         return ResponseEntity.ok(transactionService.getUserBalance(principal.getId()));
     }
 
+    @GetMapping("/me/earned-coins")
+    public ResponseEntity<Integer> getMyEarnedCoins(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(transactionService.getTotalEarnedCoins(principal.getId()));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<List<Transaction>> getMyTransactions(@AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(transactionService.getUserTransactions(principal.getId()));

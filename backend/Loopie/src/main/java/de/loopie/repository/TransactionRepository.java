@@ -14,7 +14,12 @@ import java.util.UUID;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.user.id = :userId AND t.type = :type")
     Integer sumAmountByUserIdAndType(@Param("userId") UUID userId, @Param("type") TransactionType type);
+
+    @Query("SELECT COALESCE(SUM(t.value), 0) FROM Transaction t WHERE t.user.id = :userId AND t.type = :type")
+    Integer sumValueByUserIdAndType(@Param("userId") UUID userId, @Param("type") TransactionType type);
+
     @Query("SELECT COALESCE(SUM(t.value), 0) FROM Transaction t WHERE t.user.id = :userId")
     Long sumBalanceByUserId(@Param("userId") UUID userId);
+
     List<Transaction> findByUser_IdOrderByTimeStampDesc(UUID userId);
 }

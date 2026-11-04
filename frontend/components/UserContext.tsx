@@ -3,6 +3,7 @@ import {
   getUserData, 
   fetchUserBalance, 
   fetchTotalQuantity, 
+  fetchEarnedCoins,
   UserProfile 
 } from '../api';
 
@@ -10,6 +11,7 @@ interface UserContextType {
   user: UserProfile | null;
   balance: number;
   totalQuantity: number;
+  earnedCoins: number;
   isInitialLoading: boolean;
   refreshData: () => Promise<void>;
   deductBalanceOptimistic: (cost: number) => void;
@@ -21,21 +23,24 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [balance, setBalance] = useState<number>(0);
   const [totalQuantity, setTotalQuantity] = useState<number>(0);
+  const [earnedCoins, setEarnedCoins] = useState<number>(0);
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
 
   const syncData = useCallback(async (isFirstLoad = false) => {
     if (isFirstLoad) setIsInitialLoading(true);
 
     try {
-      const [profileData, balanceData, qtyData] = await Promise.all([
+      const [profileData, balanceData, qtyData, coinsData] = await Promise.all([
         getUserData(),
         fetchUserBalance(),
         fetchTotalQuantity(),
+        fetchEarnedCoins(),
       ]);
 
       setUser(profileData);
       setBalance(balanceData);
       setTotalQuantity(qtyData);
+      setEarnedCoins(coinsData);
     } catch (err) {
       console.warn('Synchronisation fehlgeschlagen:', err);
     } finally {
@@ -61,6 +66,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         user,
         balance,
         totalQuantity,
+        earnedCoins,
         isInitialLoading,
         refreshData,
         deductBalanceOptimistic,

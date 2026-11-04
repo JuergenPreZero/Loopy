@@ -36,13 +36,17 @@ public class TransactionService {
                 .orElseThrow(() -> new ResourceNotFoundException("User " + userId + " not found."));
     }
 
+    public int getTotalEarnedCoins(UUID userId) {
+        return transactionRepository.sumValueByUserIdAndType(userId, TransactionType.RECYCLING);
+    }
+
     public List<Transaction> getUserTransactions(UUID userId) {
         return transactionRepository.findByUser_IdOrderByTimeStampDesc(userId);
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Transaction processThrowIn(ThrowInRequest request) {
-        User user = userRepository.findByPublicId(request.getPublicId())
+        User user = userRepository.findByPublicIdForUpdate(request.getPublicId())
                 .orElseThrow(() -> new ResourceNotFoundException("Station ID invalid: " + request.getPublicId()));
 
         if (request.getAmount() <= 0) {
