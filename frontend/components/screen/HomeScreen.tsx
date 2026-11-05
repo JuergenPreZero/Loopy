@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,8 @@ import {
   Animated,
 } from 'react-native';
 import { HugeiconsIcon } from '@hugeicons/react-native';
-import { 
-  QrCodeIcon, 
+import {
+  QrCodeIcon,
   Location04Icon,
   Navigation03Icon,
 } from '@hugeicons/core-free-icons';
@@ -26,33 +26,61 @@ interface HomeScreenProps {
 }
 
 const STORE_ADDRESS = 'Gerberstraße 19, 74072 Heilbronn';
+const TARGET_ITEMS = 100;
 
 export default function HomeScreen({ setActivePage }: HomeScreenProps) {
   const { user, totalQuantity, earnedCoins, isInitialLoading, refreshData } = useUser();
   const [isRefreshing, setIsRefreshing] = useState(false);
+
   const [showStoresModal, setShowStoresModal] = useState(false);
+  const [showHowToModal, setShowHowToModal] = useState(false);
+  const [showDosDontsModal, setShowDosDontsModal] = useState(false);
 
+  const slideAnimStores = useRef(new Animated.Value(600)).current;
+  const slideAnimHowTo = useRef(new Animated.Value(600)).current;
+  const slideAnimDosDonts = useRef(new Animated.Value(600)).current;
 
-  const slideAnim = useRef(new Animated.Value(600)).current;
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  // Einfache Fortschrittsberechnung (Ziel: 100 Artikel)
+  const progress = Math.min(100, Math.round((totalQuantity / TARGET_ITEMS) * 100));
+  const remainingItems = Math.max(0, TARGET_ITEMS - totalQuantity);
 
   const openStoresModal = () => {
-    slideAnim.setValue(600);
+    slideAnimStores.setValue(600);
     setShowStoresModal(true);
-    Animated.spring(slideAnim, {
-      toValue: 0,
-      useNativeDriver: true,
-      bounciness: 4,
-      speed: 12,
-    }).start();
+    Animated.spring(slideAnimStores, { toValue: 0, useNativeDriver: true, bounciness: 4, speed: 12 }).start();
   };
 
   const closeStoresModal = () => {
-    Animated.timing(slideAnim, {
-      toValue: 600,
-      duration: 220,
-      useNativeDriver: true,
-    }).start(() => {
+    Animated.timing(slideAnimStores, { toValue: 600, duration: 220, useNativeDriver: true }).start(() => {
       setShowStoresModal(false);
+    });
+  };
+
+  const openHowToModal = () => {
+    slideAnimHowTo.setValue(600);
+    setShowHowToModal(true);
+    Animated.spring(slideAnimHowTo, { toValue: 0, useNativeDriver: true, bounciness: 4, speed: 12 }).start();
+  };
+
+  const closeHowToModal = () => {
+    Animated.timing(slideAnimHowTo, { toValue: 600, duration: 220, useNativeDriver: true }).start(() => {
+      setShowHowToModal(false);
+    });
+  };
+
+  const openDosDontsModal = () => {
+    slideAnimDosDonts.setValue(600);
+    setShowDosDontsModal(true);
+    Animated.spring(slideAnimDosDonts, { toValue: 0, useNativeDriver: true, bounciness: 4, speed: 12 }).start();
+  };
+
+  const closeDosDontsModal = () => {
+    Animated.timing(slideAnimDosDonts, { toValue: 600, duration: 220, useNativeDriver: true }).start(() => {
+      setShowDosDontsModal(false);
     });
   };
 
@@ -127,13 +155,51 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
 
         <View style={[globalStyles.card, { flex: 1, marginLeft: 6, marginBottom: 0 }]}>
           <Text style={[globalStyles.subtitle, { marginBottom: 4, fontSize: 13 }]}>CO₂ gespart</Text>
-          <Text style={{ fontSize: 22, fontWeight: '700', color: '#16A34A' }}>
+          <Text style={{ fontSize: 22, fontWeight: '700', color: colors.success }}>
             {co2Saved} kg
           </Text>
           <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>Emissionen verhindert</Text>
         </View>
       </View>
 
+      {/* Schlanker Fortschrittsbalken: Recycle-Profi */}
+      <View style={[globalStyles.card, { marginBottom: 16 }]}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <View>
+            <Text style={[globalStyles.title, { fontSize: 15, marginBottom: 2 }]}>
+              Recycle-Profi
+            </Text>
+            <Text style={{ fontSize: 13, color: colors.textMuted }}>
+              {remainingItems > 0
+                ? `Noch ${remainingItems} Artikel bis zum Meilenstein`
+                : 'Meilenstein erreicht!'}
+            </Text>
+          </View>
+          <Text style={{ fontSize: 15, fontWeight: '700', color: colors.primary }}>
+            {progress}%
+          </Text>
+        </View>
+
+        <View
+          style={{
+            height: 8,
+            backgroundColor: colors.border,
+            borderRadius: 4,
+            overflow: 'hidden',
+          }}
+        >
+          <View
+            style={{
+              height: '100%',
+              width: `${progress}%`,
+              backgroundColor: colors.primary,
+              borderRadius: 4,
+            }}
+          />
+        </View>
+      </View>
+
+      {/* Quick Actions */}
       <View style={globalStyles.row}>
         <TouchableOpacity
           style={[
@@ -174,98 +240,216 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
         </TouchableOpacity>
       </View>
 
-      {/* --- STORES MODAL --- */}
-      <Modal
-        visible={showStoresModal}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={closeStoresModal}
-      >
-        <View style={styles.modalOverlay}>
-          {/* Klick außerhalb des Modals schließt das Fenster */}
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={closeStoresModal}
-          />
+      {/* Info-Kacheln nebeneinander */}
+      <View style={[globalStyles.row, { marginTop: 16 }]}>
+        <TouchableOpacity
+          style={[
+            globalStyles.card,
+            {
+              flex: 1,
+              marginRight: 6,
+              marginBottom: 0,
+              padding: 14,
+            },
+          ]}
+          activeOpacity={0.7}
+          onPress={openHowToModal}
+        >
+          <View style={[globalStyles.iconPlaceholder, { backgroundColor: '#EFF6FF', marginBottom: 10 }]}>
+            <Text style={{ fontSize: 20 }}>💡</Text>
+          </View>
+          <Text style={[globalStyles.title, { fontSize: 15, marginBottom: 2 }]}>
+            Anleitung
+          </Text>
+          <Text style={[globalStyles.subtitle, { fontSize: 12, marginBottom: 0 }]} numberOfLines={2}>
+            So läuft der Einwurf in 3 Schritten ab
+          </Text>
+        </TouchableOpacity>
 
-          {/* Animierte Karte, die von unten hochfliegt */}
-          <Animated.View
-            style={[
-              styles.modalCard,
-              { transform: [{ translateY: slideAnim }] },
-            ]}
-          >
-            {/* Header */}
-            <View style={styles.modalHeader}>
+        <TouchableOpacity
+          style={[
+            globalStyles.card,
+            {
+              flex: 1,
+              marginLeft: 6,
+              marginBottom: 0,
+              padding: 14,
+            },
+          ]}
+          activeOpacity={0.7}
+          onPress={openDosDontsModal}
+        >
+          <View style={[globalStyles.iconPlaceholder, { backgroundColor: '#F0FDF4', marginBottom: 10 }]}>
+            <Text style={{ fontSize: 20 }}>📋</Text>
+          </View>
+          <Text style={[globalStyles.title, { fontSize: 15, marginBottom: 2 }]}>
+            Do's & Don'ts
+          </Text>
+          <Text style={[globalStyles.subtitle, { fontSize: 12, marginBottom: 0 }]} numberOfLines={2}>
+            Erlaubte Artikel & Sortier-Regeln
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* 1. Modal: Anleitung */}
+      <Modal visible={showHowToModal} animationType="fade" transparent={true} onRequestClose={closeHowToModal}>
+        <View style={globalStyles.modalOverlay}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeHowToModal} />
+          <Animated.View style={[globalStyles.modalCard, { transform: [{ translateY: slideAnimHowTo }] }]}>
+            <View style={globalStyles.modalHeader}>
               <View>
-                <Text style={styles.modalTitle}>Stores</Text>
-                <Text style={styles.modalSubtitle}>
-                  Hier kannst du deine Wertstoffe abgeben.
+                <Text style={globalStyles.modalTitle}>So funktioniert’s</Text>
+                <Text style={globalStyles.modalSubtitle}>In 3 Schritten zu deinen ersten ReCoins.</Text>
+              </View>
+              <TouchableOpacity onPress={closeHowToModal} style={globalStyles.closeBtn}>
+                <Text style={globalStyles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+              <View style={[globalStyles.card, { marginBottom: 12 }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+                    <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 14 }}>1</Text>
+                  </View>
+                  <Text style={[globalStyles.title, { fontSize: 16, marginBottom: 0 }]}>QR-Code an der Station scannen</Text>
+                </View>
+                <Text style={[globalStyles.subtitle, { fontSize: 14, lineHeight: 20, marginBottom: 0 }]}>
+                  Öffne deinen persönlichen QR-Code unten in der Leiste und halte ihn vor den Sensor der Loopy-Station. Die Einwurfklappe entriegelt sich sofort.
                 </Text>
               </View>
-              <TouchableOpacity
-                onPress={closeStoresModal}
-                style={styles.closeBtn}
-              >
-                <Text style={styles.closeBtnText}>✕</Text>
+
+              <View style={[globalStyles.card, { marginBottom: 12 }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+                    <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 14 }}>2</Text>
+                  </View>
+                  <Text style={[globalStyles.title, { fontSize: 16, marginBottom: 0 }]}>Artikel einwerfen</Text>
+                </View>
+                <Text style={[globalStyles.subtitle, { fontSize: 14, lineHeight: 20, marginBottom: 0 }]}>
+                  Wirf deine Wertstoffe einzeln ein. Die integrierte Sensorik erkennt das Material automatisch und zählt deine Artikel in Echtzeit mit.
+                </Text>
+              </View>
+
+              <View style={[globalStyles.card, { marginBottom: 0 }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+                    <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 14 }}>3</Text>
+                  </View>
+                  <Text style={[globalStyles.title, { fontSize: 16, marginBottom: 0 }]}>ReCoins einlösen & genießen</Text>
+                </View>
+                <Text style={[globalStyles.subtitle, { fontSize: 14, lineHeight: 20, marginBottom: 0 }]}>
+                  Deine ReCoins werden deinem Konto direkt gutgeschrieben. Löse sie im Shop gegen Backwaren, Smoothies oder Gutscheine bei lokalen Partnern ein.
+                </Text>
+              </View>
+            </ScrollView>
+          </Animated.View>
+        </View>
+      </Modal>
+
+      {/* 2. Modal: Do's & Don'ts */}
+      <Modal visible={showDosDontsModal} animationType="fade" transparent={true} onRequestClose={closeDosDontsModal}>
+        <View style={globalStyles.modalOverlay}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeDosDontsModal} />
+          <Animated.View style={[globalStyles.modalCard, { transform: [{ translateY: slideAnimDosDonts }] }]}>
+            <View style={globalStyles.modalHeader}>
+              <View>
+                <Text style={globalStyles.modalTitle}>Do's & Don'ts</Text>
+                <Text style={globalStyles.modalSubtitle}>Was gehört in die Loopy-Station?</Text>
+              </View>
+              <TouchableOpacity onPress={closeDosDontsModal} style={globalStyles.closeBtn}>
+                <Text style={globalStyles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+              <View style={{ backgroundColor: '#F0FDF4', borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#BBF7D0' }}>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: '#166534', marginBottom: 12 }}>✓ Das gehört rein (Do's)</Text>
+                <View style={{ marginBottom: 10 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>🎾 Tennis- & Padelbälle</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Alle Standard-Filzbälle – egal ob abgenutzt, drucklos oder beschädigt. Bitte einzeln einwerfen.</Text>
+                </View>
+                <View style={{ marginBottom: 10 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>👟 Lauf- & Sportschuhe</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Sneaker, Laufschuhe und Hallenschuhe. Bitte paarweise zusammengebunden einwerfen.</Text>
+                </View>
+                <View>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>👕 Sporttextilien & Shirts</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Synthetische Sportshirts, Trikots und Sporthosen im trockenen Zustand.</Text>
+                </View>
+              </View>
+
+              <View style={{ backgroundColor: '#FEF2F2', borderRadius: 16, padding: 16, marginBottom: 0, borderWidth: 1, borderColor: '#FECACA' }}>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: '#991B1B', marginBottom: 12 }}>✕ Das gehört NICHT rein (Don'ts)</Text>
+                <View style={{ marginBottom: 10 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>🚫 Hausmüll, Plastikverpackungen & Dosen</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Getränkedosen und PET-Flaschen bitte im herkömmlichen Pfandautomaten abgeben.</Text>
+                </View>
+                <View style={{ marginBottom: 10 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>🚫 Nasse oder verschimmelte Kleidung</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Feuchte Textilien beschädigen den gesamten Sammelbehälter und blockieren die Verwertung.</Text>
+                </View>
+                <View>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>🚫 Straßenschuhe, Stiefel & Einzelschuhe</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Keine Lederschuhe, Absätze oder Winterschuhe einwerfen; Schuhe immer als Paar abgeben.</Text>
+                </View>
+              </View>
+            </ScrollView>
+          </Animated.View>
+        </View>
+      </Modal>
+
+      {/* 3. Modal: Stores & Map */}
+      <Modal visible={showStoresModal} animationType="fade" transparent={true} onRequestClose={closeStoresModal}>
+        <View style={globalStyles.modalOverlay}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeStoresModal} />
+          <Animated.View style={[globalStyles.modalCard, { transform: [{ translateY: slideAnimStores }] }]}>
+            <View style={globalStyles.modalHeader}>
+              <View>
+                <Text style={globalStyles.modalTitle}>Stores</Text>
+                <Text style={globalStyles.modalSubtitle}>Hier kannst du deine Wertstoffe abgeben.</Text>
+              </View>
+              <TouchableOpacity onPress={closeStoresModal} style={globalStyles.closeBtn}>
+                <Text style={globalStyles.closeBtnText}>✕</Text>
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Voll interaktive Karte */}
-              <View style={styles.mapContainer}>
+              <View style={globalStyles.mapContainer}>
                 {React.createElement('iframe', {
                   title: 'Loopy Store Heilbronn Map',
                   src: 'https://maps.google.com/maps?q=Gerberstra%C3%9Fe%2019%2C%2074072%20Heilbronn&t=&z=16&ie=UTF8&iwloc=&output=embed',
-                  style: {
-                    border: 0,
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: 16,
-                  },
+                  style: { border: 0, width: '100%', height: '100%', borderRadius: 16 },
                   loading: 'lazy',
                   allowFullScreen: true,
                 })}
               </View>
 
-              {/* Store Detail-Karte */}
-              <View style={styles.storeCard}>
-                <View style={styles.storeHeaderRow}>
-                  <Text style={styles.storeTitle}>Loopy Store Heilbronn</Text>
+              <View style={globalStyles.storeCard}>
+                <View style={globalStyles.storeHeaderRow}>
+                  <Text style={globalStyles.storeTitle}>Loopy Store Heilbronn</Text>
                 </View>
-
-                <View style={styles.addressRow}>
-                  <HugeiconsIcon icon={Location04Icon} size={16} color="#0F172A" />
-                  <Text style={styles.addressText}>{STORE_ADDRESS}</Text>
+                <View style={globalStyles.addressRow}>
+                  <HugeiconsIcon icon={Location04Icon} size={16} color={colors.text} />
+                  <Text style={globalStyles.addressText}>{STORE_ADDRESS}</Text>
                 </View>
-
-                <Text style={styles.storeDescription}>
-                  Unser erster Store. Hier steht bald die erste Loopy-Station.
-                </Text>
-
-                <View style={styles.tagsContainer}>
-                  <View style={[styles.tag, { backgroundColor: '#ECFCCB' }]}>
-                    <Text style={[styles.tagText, { color: '#4D7C0F' }]}>🎾 Tennisbälle</Text>
+                <Text style={globalStyles.storeDescription}>Unser erster Store. Hier steht bald die erste Loopy-Station.</Text>
+                <View style={globalStyles.tagsContainer}>
+                  <View style={[globalStyles.tag, { backgroundColor: colors.tagTennisBg }]}>
+                    <Text style={[globalStyles.tagText, { color: colors.tagTennisText }]}>🎾 Tennisbälle</Text>
                   </View>
-                  <View style={[styles.tag, { backgroundColor: '#E0F2FE' }]}>
-                    <Text style={[styles.tagText, { color: '#0369A1' }]}>👕 Textilien</Text>
+                  <View style={[globalStyles.tag, { backgroundColor: colors.tagTextileBg }]}>
+                    <Text style={[globalStyles.tagText, { color: colors.tagTextileText }]}>👕 Textilien</Text>
                   </View>
-                  <View style={[styles.tag, { backgroundColor: '#FFEDD5' }]}>
-                    <Text style={[styles.tagText, { color: '#C2410C' }]}>👟 Laufschuhe</Text>
+                  <View style={[globalStyles.tag, { backgroundColor: colors.tagShoesBg }]}>
+                    <Text style={[globalStyles.tagText, { color: colors.tagShoesText }]}>👟 Laufschuhe</Text>
                   </View>
                 </View>
-
-                <TouchableOpacity
-                  style={styles.routeBtn}
-                  activeOpacity={0.8}
-                  onPress={() => openExternalMaps(STORE_ADDRESS)}
-                >
+                <TouchableOpacity style={globalStyles.routeBtn} activeOpacity={0.8} onPress={() => openExternalMaps(STORE_ADDRESS)}>
                   <HugeiconsIcon icon={Navigation03Icon} size={18} color="#FFFFFF" />
-                  <Text style={styles.routeBtnText}>Route planen</Text>
+                  <Text style={globalStyles.routeBtnText}>Route planen</Text>
                 </TouchableOpacity>
               </View>
-
               <View style={{ height: 24 }} />
             </ScrollView>
           </Animated.View>
@@ -274,128 +458,3 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    backgroundColor: '#F8FAFC',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    maxHeight: '92%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  modalSubtitle: {
-    fontSize: 15,
-    color: '#64748B',
-    marginTop: 4,
-  },
-  closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeBtnText: {
-    fontSize: 16,
-    color: '#64748B',
-    fontWeight: 'bold',
-  },
-  mapContainer: {
-    height: 240,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 16,
-    position: 'relative',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  storeCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  storeHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  storeTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
-    flex: 1,
-  },
-  addressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  addressText: {
-    fontSize: 14,
-    color: '#0F172A',
-    fontWeight: '500',
-    marginLeft: 6,
-  },
-  storeDescription: {
-    fontSize: 14,
-    color: '#64748B',
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 20,
-  },
-  tag: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-  },
-  tagText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  routeBtn: {
-    backgroundColor: '#0F4C5C',
-    borderRadius: 12,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  routeBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-    marginLeft: 8,
-  },
-});

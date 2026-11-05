@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -21,8 +21,11 @@ import {
 import { globalStyles, colors } from '../../theme';
 import { useUser } from '../UserContext';
 
+const MAX_PER_ITEM = 5;
+const MAX_TOTAL_ITEMS = 10;
+
 export default function ShopScreen() {
-  const { user, balance, refreshData } = useUser();
+  const { user, balance, refreshData, deductBalanceOptimistic } = useUser();
   const userRole = user?.role || 'USER';
 
   const [rewards, setRewards] = useState<Reward[]>([]);
@@ -32,6 +35,10 @@ export default function ShopScreen() {
 
   const [cart, setCart] = useState<Record<string, number>>({});
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -52,6 +59,9 @@ export default function ShopScreen() {
 
   useEffect(() => {
     loadData();
+    return () => {
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    };
   }, []);
 
   const partnerList = useMemo(() => {
@@ -72,11 +82,37 @@ export default function ShopScreen() {
 
   const hasEnoughBalance = balance >= cartTotalCost;
 
+  const triggerError = (msg: string) => {
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    setErrorMessage(msg);
+    errorTimerRef.current = setTimeout(() => {
+      setErrorMessage(null);
+    }, 3500);
+  };
+
   const addToCart = (id: string) => {
-    setCart((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+    setSuccessMessage(null);
+
+    const currentQty = cart[id] || 0;
+
+    // 1. Limit pro einzelnem Artikel prüfen
+    if (currentQty >= MAX_PER_ITEM) {
+      triggerError(`Maximal ${MAX_PER_ITEM} Stück pro Prämie erlaubt.`);
+      return;
+    }
+
+    // 2. Limit für gesamten Warenkorb prüfen
+    if (cartTotalItems >= MAX_TOTAL_ITEMS) {
+      triggerError(`Dein Warenkorb darf maximal ${MAX_TOTAL_ITEMS} Artikel enthalten.`);
+      return;
+    }
+
+    setErrorMessage(null);
+    setCart((prev) => ({ ...prev, [id]: currentQty + 1 }));
   };
 
   const removeFromCart = (id: string) => {
+    setErrorMessage(null);
     setCart((prev) => {
       const newCart = { ...prev };
       if (newCart[id] > 1) {
@@ -89,7 +125,15 @@ export default function ShopScreen() {
   };
 
   const handleCheckout = async () => {
-    if (isCheckingOut || !hasEnoughBalance || cartTotalItems === 0) return;
+    if (isCheckingOut || cartTotalItems === 0) return;
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (!hasEnoughBalance) {
+      triggerError('Nicht genügend ReCoins für diese Einlösung vorhanden.');
+      return;
+    }
+
     setIsCheckingOut(true);
 
     try {
@@ -99,10 +143,13 @@ export default function ShopScreen() {
       }));
 
       await redeemCart(items);
+      deductBalanceOptimistic?.(cartTotalCost);
       setCart({});
+      setSuccessMessage('Prämien erfolgreich eingelöst! Zeige deinen Beleg an der Kasse vor.');
+      setTimeout(() => setSuccessMessage(null), 4000);
       await refreshData();
-    } catch (error) {
-      console.error('Fehler beim Einlösen:', error);
+    } catch (error: any) {
+      triggerError(error.message || 'Fehler beim Einlösen der Prämien.');
     } finally {
       setIsCheckingOut(false);
     }
@@ -164,6 +211,20 @@ export default function ShopScreen() {
       <Text style={globalStyles.title}>Prämien & Partner</Text>
       <Text style={globalStyles.subtitle}>Löse deine ReCoins gegen Gutscheine und Prämien ein.</Text>
 
+      {/* Rotes Fehler-Banner */}
+      {errorMessage && (
+        <View style={globalStyles.bannerError}>
+          <Text style={globalStyles.bannerErrorText}>✕ {errorMessage}</Text>
+        </View>
+      )}
+
+      {/* Grünes Erfolgs-Banner */}
+      {successMessage && (
+        <View style={globalStyles.bannerSuccess}>
+          <Text style={globalStyles.bannerSuccessText}>✓ {successMessage}</Text>
+        </View>
+      )}
+
       {userRole === 'ADMIN' && (
         <TouchableOpacity
           style={[globalStyles.button, { marginBottom: 14 }]}
@@ -222,6 +283,8 @@ export default function ShopScreen() {
           renderItem={({ item }) => {
             const isItemDeleting = deletingId === item.id;
             const qty = cart[item.id] || 0;
+            const isAtItemLimit = qty >= MAX_PER_ITEM;
+            const isAtCartLimit = cartTotalItems >= MAX_TOTAL_ITEMS;
 
             return (
               <TouchableOpacity
@@ -267,14 +330,28 @@ export default function ShopScreen() {
                     </>
                   )}
 
+                  {/* Button bleibt klickbar, erhält bei Limit nur eine dezente Tönung */}
                   <TouchableOpacity
-                    style={globalStyles.circleBtn}
+                    style={[
+                      globalStyles.circleBtn,
+                      (isAtItemLimit || isAtCartLimit) && {
+                        borderColor: colors.border,
+                        backgroundColor: colors.background,
+                      },
+                    ]}
                     onPress={(e) => {
                       e.stopPropagation();
                       addToCart(item.id);
                     }}
                   >
-                    <Text style={globalStyles.circleBtnText}>+</Text>
+                    <Text
+                      style={[
+                        globalStyles.circleBtnText,
+                        (isAtItemLimit || isAtCartLimit) && { color: colors.textMuted },
+                      ]}
+                    >
+                      +
+                    </Text>
                   </TouchableOpacity>
 
                   {userRole === 'ADMIN' && (

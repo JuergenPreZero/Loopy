@@ -2,18 +2,14 @@ package de.loopie.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-/**
- * Transactions entity, explains the structure of the transactions table
- */
 @Entity
 @Table(name = "transactions")
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
@@ -37,62 +33,26 @@ public class Transaction {
     @Column(nullable = false)
     private OffsetDateTime timeStamp;
 
-    public Transaction() {
-    }
+    public Transaction() {}
 
-    public OffsetDateTime getTimeStamp() {
-        return timeStamp;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setTimeStamp(OffsetDateTime timeStamp) {
-        this.timeStamp = timeStamp;
-    }
+    public OffsetDateTime getTimeStamp() { return timeStamp; }
+    public void setTimeStamp(OffsetDateTime timeStamp) { this.timeStamp = timeStamp; }
 
-    public String getUnitId() {
-        return unitId;
-    }
+    public String getUnitId() { return unitId; }
+    public void setUnitId(String unitId) { this.unitId = unitId; }
 
-    public void setUnitId(String unitId) {
-        this.unitId = unitId;
-    }
+    public int getValue() { return value; }
+    public void setValue(int value) { this.value = value; }
 
-    public int getValue() {
-        return value;
-    }
+    public Integer getAmount() { return amount; }
+    public void setAmount(Integer amount) { this.amount = amount; }
 
-    public void setValue(int value) {
-        this.value = value;
-    }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
-    public Integer getAmount() {
-        return amount;
-    }
-
-    public void setAmount(Integer amount) {
-        this.amount = amount;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public TransactionType getType() {
-        return type;
-    }
-
-    public void setType(TransactionType type) {
-        this.type = type;
-    }
+    public TransactionType getType() { return type; }
+    public void setType(TransactionType type) { this.type = type; }
 }

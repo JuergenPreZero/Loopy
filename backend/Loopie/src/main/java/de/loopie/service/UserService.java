@@ -1,11 +1,13 @@
 package de.loopie.service;
 
+import de.loopie.common.ResourceNotFoundException;
 import de.loopie.dto.UpdateUserRequest;
 import de.loopie.dto.UserResponseDTO;
 import de.loopie.entity.User;
 import de.loopie.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -22,7 +24,7 @@ public class UserService {
 
     public User getUserById(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User " + userId + " not found."));
+                .orElseThrow(() -> new ResourceAccessException("User " + userId + " not found."));
     }
 
     public UserResponseDTO getUserProfile(UUID userId) {
@@ -60,7 +62,7 @@ public class UserService {
     @Transactional
     public void deleteUserById(UUID userId) {
         if (!userRepository.existsById(userId)) {
-            throw new IllegalArgumentException("User " + userId + " not found.");
+            throw new ResourceNotFoundException("User " + userId + " not found.");
         }
         userRepository.deleteById(userId);
     }

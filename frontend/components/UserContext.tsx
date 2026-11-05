@@ -48,13 +48,23 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  // 1. Initialer Datenabruf beim Start
   useEffect(() => {
     syncData(true);
   }, [syncData]);
 
-  const refreshData = async () => {
+  // 2. Automatisches Hintergrund-Polling alle 5 Sekunden (aktualisiert live beim Einwurf)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      syncData(false);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [syncData]);
+
+  const refreshData = useCallback(async () => {
     await syncData(false);
-  };
+  }, [syncData]);
 
   const deductBalanceOptimistic = (cost: number) => {
     setBalance((prev) => Math.max(0, prev - cost));

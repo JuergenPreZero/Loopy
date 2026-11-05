@@ -1,6 +1,7 @@
 package de.loopie.service;
 
 import de.loopie.common.InsufficientBalanceException;
+import de.loopie.common.ResourceNotFoundException;
 import de.loopie.dto.CartRedeemRequest;
 import de.loopie.dto.CreateRewardRequest;
 import de.loopie.entity.*;
@@ -20,6 +21,9 @@ public class RewardService {
     private final RewardRepository rewardRepository;
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
+
+    private static final int MAX_TOTAL_ITEMS = 10;
+    private static final int MAX_PER_ITEM = 5;
 
     public RewardService(RewardRepository rewardRepository,
                          UserRepository userRepository,
@@ -59,7 +63,7 @@ public class RewardService {
     @Transactional
     public void deleteReward(UUID rewardId) {
         Reward reward = rewardRepository.findById(rewardId)
-                .orElseThrow(() -> new IllegalArgumentException("Reward does not exist."));
+                .orElseThrow(() -> new ResourceNotFoundException("Reward not found: " + rewardId));
 
         reward.setActive(false);
         rewardRepository.save(reward);
@@ -68,26 +72,37 @@ public class RewardService {
     @Transactional(rollbackFor = Exception.class)
     public Transaction redeemCart(UUID authenticatedUserId, CartRedeemRequest request) {
         if (request.getItems() == null || request.getItems().isEmpty()) {
-            throw new IllegalArgumentException("Cart cannot be empty.");
+            throw new IllegalArgumentException("Warenkorb darf nicht leer sein.");
+        }
+
+        int requestedTotalQuantity = 0;
+        for (CartRedeemRequest.CartItemDTO item : request.getItems()) {
+            if (item.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Menge muss größer als 0 sein.");
+            }
+            if (item.getQuantity() > MAX_PER_ITEM) {
+                throw new IllegalArgumentException("Maximal " + MAX_PER_ITEM + " Stück pro Prämie erlaubt.");
+            }
+            requestedTotalQuantity += item.getQuantity();
+        }
+
+        if (requestedTotalQuantity > MAX_TOTAL_ITEMS) {
+            throw new IllegalArgumentException("Maximal " + MAX_TOTAL_ITEMS + " Artikel pro Einlösung möglich.");
         }
 
         User user = userRepository.findByIdForUpdate(authenticatedUserId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + authenticatedUserId));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + authenticatedUserId));
 
         int totalCost = 0;
         int totalQuantity = 0;
         List<String> itemSummaries = new ArrayList<>();
 
         for (CartRedeemRequest.CartItemDTO item : request.getItems()) {
-            if (item.getQuantity() <= 0) {
-                throw new IllegalArgumentException("Quantity must be greater than zero.");
-            }
-
             Reward reward = rewardRepository.findById(item.getRewardId())
-                    .orElseThrow(() -> new IllegalArgumentException("Reward not found: " + item.getRewardId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Reward not found: " + item.getRewardId()));
 
             if (!reward.isActive()) {
-                throw new IllegalStateException("Reward '" + reward.getTitle() + "' is no longer active.");
+                throw new IllegalStateException("Prämie '" + reward.getTitle() + "' ist nicht mehr verfügbar.");
             }
 
             totalCost += (reward.getCost() * item.getQuantity());
@@ -96,54 +111,7 @@ public class RewardService {
         }
 
         if (user.getBalance() < totalCost) {
-            throw new InsufficientBalanceException("Insufficient ReCoins balance.");
-        }
-
-        user.setBalance(user.getBalance() - totalCost);
-        userRepository.save(user);
-
-        Transaction tx = new Transaction();
-        tx.setUser(user);
-        tx.setAmount(totalQuantity);
-        tx.setValue(-totalCost);
-        tx.setUnitId(String.join(", ", itemSummaries));
-        tx.setType(TransactionType.REDEMPTION);
-
-        return transactionRepository.save(tx);
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public Transaction redeemCart(CartRedeemRequest request) {
-        if (request.getItems() == null || request.getItems().isEmpty()) {
-            throw new IllegalArgumentException("Cart cannot be empty.");
-        }
-
-        User user = userRepository.findByIdForUpdate(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + request.getUserId()));
-
-        int totalCost = 0;
-        int totalQuantity = 0;
-        List<String> itemSummaries = new ArrayList<>();
-
-        for (CartRedeemRequest.CartItemDTO item : request.getItems()) {
-            if (item.getQuantity() <= 0) {
-                throw new IllegalArgumentException("Quantity must be greater than zero.");
-            }
-
-            Reward reward = rewardRepository.findById(item.getRewardId())
-                    .orElseThrow(() -> new IllegalArgumentException("Reward not found: " + item.getRewardId()));
-
-            if (!reward.isActive()) {
-                throw new IllegalStateException("Reward '" + reward.getTitle() + "' is no longer active.");
-            }
-
-            totalCost += (reward.getCost() * item.getQuantity());
-            totalQuantity += item.getQuantity();
-            itemSummaries.add(item.getQuantity() + "x " + reward.getTitle());
-        }
-
-        if (user.getBalance() < totalCost) {
-            throw new InsufficientBalanceException("Insufficient ReCoins balance.");
+            throw new InsufficientBalanceException("Nicht genügend ReCoins vorhanden.");
         }
 
         user.setBalance(user.getBalance() - totalCost);

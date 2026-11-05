@@ -34,6 +34,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const firstNameRef = useRef<TextInput>(null);
@@ -83,8 +84,15 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         email !== originalUser.email)
   );
 
+  const handleFieldChange = (setter: (val: string) => void, val: string) => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setter(val);
+  };
+
   const handleSave = async () => {
     setErrorMessage(null);
+    setSuccessMessage(null);
 
     const error =
       validator.validateName(firstName, 'Vorname') ||
@@ -118,7 +126,8 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         email: normalizedEmail,
       });
 
-      alert('Profil erfolgreich gespeichert!');
+      setSuccessMessage('Profil erfolgreich aktualisiert.');
+      setTimeout(() => setSuccessMessage(null), 3500);
     } catch (err: any) {
       setErrorMessage(err.message || 'Speichern fehlgeschlagen.');
     } finally {
@@ -127,11 +136,12 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
   };
 
   const confirmAndDelete = async () => {
+    setErrorMessage(null);
     try {
       await deleteAccount();
       onLogout();
     } catch {
-      alert('Konto konnte nicht gelöscht werden.');
+      setErrorMessage('Konto konnte nicht gelöscht werden. Bitte erneut versuchen.');
       setShowConfirm(false);
     }
   };
@@ -156,7 +166,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
             ref={firstNameRef}
             style={[globalStyles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
             value={firstName}
-            onChangeText={setFirstName}
+            onChangeText={(val) => handleFieldChange(setFirstName, val)}
           />
           <TouchableOpacity onPress={() => firstNameRef.current?.focus()}>
             {EditIconComponent ? (
@@ -175,7 +185,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
             ref={lastNameRef}
             style={[globalStyles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
             value={lastName}
-            onChangeText={setLastName}
+            onChangeText={(val) => handleFieldChange(setLastName, val)}
           />
           <TouchableOpacity onPress={() => lastNameRef.current?.focus()}>
             {EditIconComponent ? (
@@ -194,7 +204,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
             ref={emailRef}
             style={[globalStyles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(val) => handleFieldChange(setEmail, val)}
             keyboardType="email-address"
             autoCapitalize="none"
           />
@@ -215,10 +225,17 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         </Text>
       </View>
 
+      {/* Feedback-Banner aus theme.ts */}
+      {successMessage && (
+        <View style={globalStyles.bannerSuccess}>
+          <Text style={globalStyles.bannerSuccessText}>✓ {successMessage}</Text>
+        </View>
+      )}
+
       {errorMessage && (
-        <Text style={{ color: colors.danger, textAlign: 'center', marginVertical: 8 }}>
-          {errorMessage}
-        </Text>
+        <View style={globalStyles.bannerError}>
+          <Text style={globalStyles.bannerErrorText}>✕ {errorMessage}</Text>
+        </View>
       )}
 
       {hasChanges && (
@@ -253,7 +270,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
             </Text>
           </TouchableOpacity>
         ) : (
-          <View style={[globalStyles.card, { borderColor: colors.border, marginTop: 8 }]}>
+          <View style={[globalStyles.card, { marginTop: 8 }]}>
             <Text style={[globalStyles.subtitle, { textAlign: 'center', marginBottom: 12 }]}>
               Möchtest du dein Konto und alle Daten unwiderruflich löschen?
             </Text>
@@ -270,7 +287,13 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
               <TouchableOpacity
                 style={[
                   globalStyles.button,
-                  { flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, paddingVertical: 10 },
+                  {
+                    flex: 1,
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    paddingVertical: 10,
+                  },
                 ]}
                 onPress={() => setShowConfirm(false)}
               >
