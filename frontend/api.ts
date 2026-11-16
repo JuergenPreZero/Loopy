@@ -73,7 +73,6 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   publicId: string;
-  balance: number;
   role: 'USER' | 'ADMIN';
 }
 
@@ -190,7 +189,7 @@ export async function createReward(payload: {
   title: string;
   partnerName: string;
   cost: number;
-  description?: string;
+  imageUrl?: string | null;
 }): Promise<Reward> {
   const headers = await getHeaders();
   const response = await fetch(`${REWARDS_URL}`, {

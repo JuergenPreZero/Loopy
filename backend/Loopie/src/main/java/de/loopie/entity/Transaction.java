@@ -22,7 +22,7 @@ public class Transaction {
     @Column(name = "transaction_value", nullable = false)
     private int value;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String unitId;
 
     @Enumerated(EnumType.STRING)

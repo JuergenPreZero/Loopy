@@ -53,7 +53,7 @@ public class RewardService {
                 request.getTitle().trim(),
                 request.getPartnerName().trim(),
                 request.getCost(),
-                request.getDescription(),
+                null,
                 true
         );
 
@@ -110,12 +110,12 @@ public class RewardService {
             itemSummaries.add(item.getQuantity() + "x " + reward.getTitle());
         }
 
-        if (user.getBalance() < totalCost) {
+        Long currentBalance = transactionRepository.sumBalanceByUserId(authenticatedUserId);
+        long availableBalance = (currentBalance != null) ? currentBalance : 0L;
+
+        if (availableBalance < totalCost) {
             throw new InsufficientBalanceException("Nicht genügend ReCoins vorhanden.");
         }
-
-        user.setBalance(user.getBalance() - totalCost);
-        userRepository.save(user);
 
         Transaction tx = new Transaction();
         tx.setUser(user);

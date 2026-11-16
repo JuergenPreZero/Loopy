@@ -27,17 +27,21 @@ public class TransactionService {
     }
 
     public int getTotalQuantity(UUID userId) {
-        return transactionRepository.sumAmountByUserIdAndType(userId, TransactionType.RECYCLING);
+        Integer quantity = transactionRepository.sumAmountByUserIdAndType(userId, TransactionType.RECYCLING);
+        return quantity != null ? quantity : 0;
     }
 
     public int getUserBalance(UUID userId) {
-        return userRepository.findById(userId)
-                .map(User::getBalance)
-                .orElseThrow(() -> new ResourceNotFoundException("User " + userId + " not found."));
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User " + userId + " not found.");
+        }
+        Long balance = transactionRepository.sumBalanceByUserId(userId);
+        return balance != null ? balance.intValue() : 0;
     }
 
     public int getTotalEarnedCoins(UUID userId) {
-        return transactionRepository.sumValueByUserIdAndType(userId, TransactionType.RECYCLING);
+        Integer earned = transactionRepository.sumValueByUserIdAndType(userId, TransactionType.RECYCLING);
+        return earned != null ? earned : 0;
     }
 
     public List<Transaction> getUserTransactions(UUID userId) {
@@ -64,11 +68,7 @@ public class TransactionService {
         tx.setValue(earnedPoints);
         tx.setUnitId(item.getDisplayName());
         tx.setType(TransactionType.RECYCLING);
-        Transaction saved = transactionRepository.save(tx);
 
-        user.setBalance(user.getBalance() + earnedPoints);
-        userRepository.save(user);
-
-        return saved;
+        return transactionRepository.save(tx);
     }
 }
