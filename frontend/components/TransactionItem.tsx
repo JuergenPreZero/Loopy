@@ -33,7 +33,7 @@ export default function TransactionItem({ itemType, amount, value, date }: Trans
   return (
     <View style={styles.card}>
       <View style={styles.leftCol}>
-        <Text style={styles.itemName} numberOfLines={2}>
+        <Text style={styles.itemName}>
           {itemType}
         </Text>
         <Text style={styles.itemAmount}>
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: 16,
     borderRadius: 16,
     marginBottom: 10,
@@ -72,11 +72,13 @@ const styles = StyleSheet.create({
   },
   leftCol: {
     flex: 1,
+    marginRight: 18, 
   },
   itemName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#0F172A',
+    lineHeight: 22,
     marginBottom: 2,
   },
   itemAmount: {
@@ -89,12 +91,15 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
   rightCol: {
+    flexShrink: 0, 
     alignItems: 'flex-end',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 1,
   },
   totalValue: {
     fontSize: 17,
     fontWeight: '700',
+    textAlign: 'right',
   },
   positiveValue: {
     color: '#16A34A',

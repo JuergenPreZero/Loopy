@@ -1,35 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import TransactionItem from '../TransactionItem';
-import { fetchUserTransactions, BackendTransaction } from '../../api';
+import { useUser } from '../UserContext';
 import { globalStyles, colors } from '../../theme';
 
-interface HistoryScreenProps {
-  userId: string;
-}
-
 export default function HistoryScreen() {
-  const [transactions, setTransactions] = useState<BackendTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { transactions, isInitialLoading, refreshData } = useUser();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadTransactions = async () => {
-      try {
-        const data = await fetchUserTransactions();
-        if (isMounted) setTransactions(data);
-      } catch (error) {
-        console.error('Fehler beim Abrufen der Transaktionen:', error);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    loadTransactions();
-
-    return () => { isMounted = false; };
-  }, []);
+  const onRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshData();
+    setIsRefreshing(false);
+  };
 
   return (
     <View style={globalStyles.screen}>
@@ -40,7 +23,7 @@ export default function HistoryScreen() {
         </Text>
       </View>
 
-      {isLoading ? (
+      {isInitialLoading && transactions.length === 0 ? (
         <View style={globalStyles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -48,12 +31,20 @@ export default function HistoryScreen() {
         <FlatList
           data={transactions}
           keyExtractor={(item) => item.id.toString()}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
           renderItem={({ item }) => (
             <TransactionItem
               itemType={item.unitId}
               amount={item.amount}
               value={item.value}
-              date={item.timeStamp}
+              date={item.timeStamp || item.createdAt}
             />
           )}
           showsVerticalScrollIndicator={false}

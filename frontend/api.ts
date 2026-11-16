@@ -35,19 +35,22 @@ const getHeaders = async () => {
   return headers;
 };
 
-// Interfaces
 export interface AuthResponse {
   token: string;
   user: UserProfile;
 }
 
 export interface BackendTransaction {
-  id: number;
+  id: string | number;
   amount: number;
   unitId: string;
   value: number;
-  timeStamp: string;
+  timeStamp?: string;
+  createdAt?: string;
+  type?: 'REDEMPTION' | 'THROW_IN' | string;
 }
+
+export type Transaction = BackendTransaction;
 
 export interface UpdateUserData {
   firstName: string;
@@ -60,8 +63,8 @@ export interface Reward {
   title: string;
   partnerName: string;
   cost: number;
-  description?: string;
   active: boolean;
+  imageUrl?: string | null;
 }
 
 export interface UserProfile {
@@ -112,7 +115,7 @@ export const loginUser = async (email: string, password: string): Promise<AuthRe
   return data;
 };
 
-// --- Profile & Balances --
+// --- Profile & Balances ---
 
 export const fetchTotalQuantity = async (): Promise<number> => {
   const headers = await getHeaders();
@@ -171,6 +174,8 @@ export const fetchUserTransactions = async (): Promise<BackendTransaction[]> => 
   if (!response.ok) throw new Error('Fehler beim Laden der Transaktionen');
   return response.json();
 };
+
+export const fetchTransactions = fetchUserTransactions;
 
 // --- Rewards ---
 

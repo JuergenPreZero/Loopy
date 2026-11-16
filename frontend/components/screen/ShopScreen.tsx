@@ -9,8 +9,7 @@ import {
   Modal,
   TextInput,
 } from 'react-native';
-import { HugeiconsIcon } from '@hugeicons/react-native';
-import { Delete02Icon } from '@hugeicons/core-free-icons';
+import RewardCard from '../RewardCard';
 import {
   redeemCart,
   fetchRewards,
@@ -92,10 +91,9 @@ export default function ShopScreen() {
 
   const addToCart = (id: string) => {
     setSuccessMessage(null);
-
     const currentQty = cart[id] || 0;
 
-    // 1. Limit pro einzelnem Artikel prüfen
+    // 1. Limit pro Prämie prüfen
     if (currentQty >= MAX_PER_ITEM) {
       triggerError(`Maximal ${MAX_PER_ITEM} Stück pro Prämie erlaubt.`);
       return;
@@ -145,7 +143,7 @@ export default function ShopScreen() {
       await redeemCart(items);
       deductBalanceOptimistic?.(cartTotalCost);
       setCart({});
-      setSuccessMessage('Prämien erfolgreich eingelöst! Zeige deinen Beleg an der Kasse vor.');
+      setSuccessMessage('Prämien erfolgreich eingelöst!');
       setTimeout(() => setSuccessMessage(null), 4000);
       await refreshData();
     } catch (error: any) {
@@ -234,6 +232,7 @@ export default function ShopScreen() {
         </TouchableOpacity>
       )}
 
+      {/* Partner-Filter */}
       <View style={{ marginBottom: 14 }}>
         <ScrollView
           horizontal
@@ -281,102 +280,26 @@ export default function ShopScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: cartTotalItems > 0 ? 100 : 20 }}
           renderItem={({ item }) => {
-            const isItemDeleting = deletingId === item.id;
             const qty = cart[item.id] || 0;
-            const isAtItemLimit = qty >= MAX_PER_ITEM;
-            const isAtCartLimit = cartTotalItems >= MAX_TOTAL_ITEMS;
+            const canIncrement = qty < MAX_PER_ITEM && cartTotalItems < MAX_TOTAL_ITEMS;
 
             return (
-              <TouchableOpacity
-                activeOpacity={0.7}
-                style={[globalStyles.card, globalStyles.row, { alignItems: 'center' }]}
-                onPress={() => addToCart(item.id)}
-              >
-                <View style={globalStyles.iconPlaceholder}>
-                  <Text style={{ fontSize: 20 }}>🎁</Text>
-                </View>
-
-                <View style={{ flex: 1, marginRight: 12 }}>
-                  <Text
-                    style={[globalStyles.subtitle, { marginBottom: 2, fontSize: 12 }]}
-                    numberOfLines={1}
-                  >
-                    {item.partnerName}
-                  </Text>
-                  <Text
-                    style={[globalStyles.title, { fontSize: 16, marginBottom: 4 }]}
-                    numberOfLines={1}
-                  >
-                    {item.title}
-                  </Text>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.primary }}>
-                    {item.cost} ReCoins
-                  </Text>
-                </View>
-
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  {qty > 0 && (
-                    <>
-                      <TouchableOpacity
-                        style={globalStyles.circleBtn}
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          removeFromCart(item.id);
-                        }}
-                      >
-                        <Text style={globalStyles.circleBtnText}>-</Text>
-                      </TouchableOpacity>
-                      <Text style={globalStyles.qtyText}>{qty}</Text>
-                    </>
-                  )}
-
-                  {/* Button bleibt klickbar, erhält bei Limit nur eine dezente Tönung */}
-                  <TouchableOpacity
-                    style={[
-                      globalStyles.circleBtn,
-                      (isAtItemLimit || isAtCartLimit) && {
-                        borderColor: colors.border,
-                        backgroundColor: colors.background,
-                      },
-                    ]}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      addToCart(item.id);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        globalStyles.circleBtnText,
-                        (isAtItemLimit || isAtCartLimit) && { color: colors.textMuted },
-                      ]}
-                    >
-                      +
-                    </Text>
-                  </TouchableOpacity>
-
-                  {userRole === 'ADMIN' && (
-                    <TouchableOpacity
-                      style={{ padding: 8, marginLeft: 12 }}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        handleDeleteReward(item.id);
-                      }}
-                      disabled={Boolean(deletingId)}
-                    >
-                      {isItemDeleting ? (
-                        <ActivityIndicator size="small" color={colors.danger} />
-                      ) : (
-                        <HugeiconsIcon icon={Delete02Icon} size={20} color={colors.danger} />
-                      )}
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </TouchableOpacity>
+              <RewardCard
+                reward={item}
+                quantity={qty}
+                onIncrement={() => addToCart(item.id)}
+                onDecrement={() => removeFromCart(item.id)}
+                canIncrement={canIncrement}
+                isAdmin={userRole === 'ADMIN'}
+                onDelete={() => handleDeleteReward(item.id)}
+                isDeleting={deletingId === item.id}
+              />
             );
           }}
         />
       )}
 
+      {/* Checkout-Bar */}
       {cartTotalItems > 0 && (
         <View style={globalStyles.checkoutBar}>
           <View>
@@ -401,6 +324,7 @@ export default function ShopScreen() {
         </View>
       )}
 
+      {/* Admin Modal */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={globalStyles.modalBackground}>
           <View style={[globalStyles.card, { width: '100%', maxWidth: 400 }]}>

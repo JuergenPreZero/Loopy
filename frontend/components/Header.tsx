@@ -1,39 +1,39 @@
-import React from 'react';
-import { View, Text, StatusBar } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StatusBar, StyleSheet } from 'react-native';
 import { useUser } from './UserContext';
 import { colors } from '../theme';
 
 export default function Header() {
   const { balance } = useUser();
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedTime = time.toLocaleTimeString('de-DE', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 
   return (
     <>
       <StatusBar backgroundColor={colors.surface} barStyle="dark-content" />
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-        }}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: colors.primaryLight,
-            paddingVertical: 6,
-            paddingHorizontal: 16,
-            borderRadius: 20,
-            borderWidth: 1,
-            borderColor: colors.primaryBorder,
-          }}
-        >
-          <Text style={{ fontSize: 16, marginRight: 6 }}>🪙</Text>
-          <Text style={{ fontSize: 15, fontWeight: '700', color: colors.primary }}>
+      <View style={styles.headerContainer}>
+        <View style={styles.pillBadge}>n
+          <Text style={styles.badgeText}>
+            {formattedTime}
+          </Text>
+        </View>
+
+        <View style={styles.pillBadge}>
+          <Text style={styles.coinEmoji}>🪙</Text>
+          <Text style={styles.badgeText}>
             {balance} ReCoins
           </Text>
         </View>
@@ -41,3 +41,43 @@ export default function Header() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  headerContainer: {
+    backgroundColor: colors.surface,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  pillBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primaryLight,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+    marginRight: 8,
+  },
+  coinEmoji: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  badgeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.primary,
+    fontVariant: ['tabular-nums'], 
+  },
+});

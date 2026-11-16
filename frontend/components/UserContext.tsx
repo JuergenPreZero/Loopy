@@ -4,7 +4,9 @@ import {
   fetchUserBalance, 
   fetchTotalQuantity, 
   fetchEarnedCoins,
-  UserProfile 
+  fetchTransactions,
+  UserProfile,
+  Transaction,
 } from '../api';
 
 interface UserContextType {
@@ -12,6 +14,7 @@ interface UserContextType {
   balance: number;
   totalQuantity: number;
   earnedCoins: number;
+  transactions: Transaction[]; 
   isInitialLoading: boolean;
   refreshData: () => Promise<void>;
   deductBalanceOptimistic: (cost: number) => void;
@@ -24,23 +27,28 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [balance, setBalance] = useState<number>(0);
   const [totalQuantity, setTotalQuantity] = useState<number>(0);
   const [earnedCoins, setEarnedCoins] = useState<number>(0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]); // <-- Neu
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
 
   const syncData = useCallback(async (isFirstLoad = false) => {
     if (isFirstLoad) setIsInitialLoading(true);
 
     try {
-      const [profileData, balanceData, qtyData, coinsData] = await Promise.all([
+      const [profileData, balanceData, qtyData, coinsData, txData] = await Promise.all([
         getUserData(),
         fetchUserBalance(),
         fetchTotalQuantity(),
         fetchEarnedCoins(),
+        fetchTransactions().catch(() => []), 
       ]);
 
       setUser(profileData);
       setBalance(balanceData);
       setTotalQuantity(qtyData);
       setEarnedCoins(coinsData);
+      if (Array.isArray(txData)) {
+        setTransactions(txData);
+      }
     } catch (err) {
       console.warn('Synchronisation fehlgeschlagen:', err);
     } finally {
@@ -48,12 +56,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // 1. Initialer Datenabruf beim Start
   useEffect(() => {
     syncData(true);
   }, [syncData]);
 
-  // 2. Automatisches Hintergrund-Polling alle 5 Sekunden (aktualisiert live beim Einwurf)
   useEffect(() => {
     const interval = setInterval(() => {
       syncData(false);
@@ -77,6 +83,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         balance,
         totalQuantity,
         earnedCoins,
+        transactions,
         isInitialLoading,
         refreshData,
         deductBalanceOptimistic,
