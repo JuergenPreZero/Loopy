@@ -25,7 +25,7 @@ export default function Header() {
     <>
       <StatusBar backgroundColor={colors.surface} barStyle="dark-content" />
       <View style={styles.headerContainer}>
-        <View style={styles.pillBadge}>n
+        <View style={styles.pillBadge}>
           <Text style={styles.badgeText}>
             {formattedTime}
           </Text>

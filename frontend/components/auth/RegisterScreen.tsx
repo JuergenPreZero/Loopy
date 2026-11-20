@@ -25,6 +25,7 @@ export default function RegisterScreen({ onBack, onRegisterSuccess, onNavigateLo
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isAgeConfirmed, setIsAgeConfirmed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -35,7 +36,8 @@ export default function RegisterScreen({ onBack, onRegisterSuccess, onNavigateLo
       validator.validateName(firstName, 'Vorname') ||
       validator.validateName(lastName, 'Nachname') ||
       validator.validateEmail(email) ||
-      validator.validatePassword(password);
+      validator.validatePassword(password) ||
+      (!isAgeConfirmed ? 'Bitte bestätige, dass du mindestens 16 Jahre alt bist.' : null);
 
     if (error) {
       setErrorMessage(error);
@@ -45,11 +47,11 @@ export default function RegisterScreen({ onBack, onRegisterSuccess, onNavigateLo
     setIsLoading(true);
     try {
       const authData = await registerUser(
-      firstName.trim(),
-      lastName.trim(),
-      email.trim().toLowerCase(),
-      password
-    );
+        firstName.trim(),
+        lastName.trim(),
+        email.trim().toLowerCase(),
+        password
+      );
       onRegisterSuccess(authData.token, authData.user.id);
     } catch (err) {
       setErrorMessage('Registrierung fehlgeschlagen. E-Mail existiert bereits.');
@@ -114,6 +116,23 @@ export default function RegisterScreen({ onBack, onRegisterSuccess, onNavigateLo
         </TouchableOpacity>
       </View>
 
+      {/* Altersbestätigung (ab 16 Jahren) */}
+      <TouchableOpacity
+        style={styles.checkboxRow}
+        activeOpacity={0.7}
+        onPress={() => {
+          setIsAgeConfirmed((prev) => !prev);
+          if (errorMessage) setErrorMessage(null);
+        }}
+      >
+        <View style={[styles.checkboxBox, isAgeConfirmed && styles.checkboxBoxChecked]}>
+          {isAgeConfirmed && <Text style={styles.checkboxCheckmark}>✓</Text>}
+        </View>
+        <Text style={styles.checkboxLabel}>
+          Ich bestätige, dass ich mindestens 16 Jahre alt bin.
+        </Text>
+      </TouchableOpacity>
+
       {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
 
       <View style={styles.buttonContainer}>
@@ -154,6 +173,37 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     paddingHorizontal: 12,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  checkboxBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  checkboxBoxChecked: {
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
+  },
+  checkboxCheckmark: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    lineHeight: 16,
+  },
+  checkboxLabel: {
+    flex: 1,
+    fontSize: 14,
+    color: '#334155',
   },
   buttonContainer: { marginBottom: 20 },
   errorText: { color: 'red', marginBottom: 15, textAlign: 'center', fontWeight: '500' },

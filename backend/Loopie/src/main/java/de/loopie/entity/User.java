@@ -27,9 +27,6 @@ public class User {
     @Column(nullable = false,length = 100,unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private int balance;
-
     @Column(nullable = false,length = 100)
     private String password;
 
@@ -86,14 +83,6 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public int getBalance() {
-        return balance;
-    }
-
-    public void setBalance(int balance) {
-        this.balance = balance;
     }
 
     public String getPassword() {

@@ -10,7 +10,6 @@ public class UserResponseDTO {
     private String firstName;
     private String lastName;
     private String publicId;
-    private int balance;
     private Role role;
 
     public UserResponseDTO(User user) {
@@ -19,7 +18,6 @@ public class UserResponseDTO {
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.publicId = user.getPublicId();
-        this.balance = user.getBalance();
         this.role = user.getRole();
     }
 
@@ -28,6 +26,5 @@ public class UserResponseDTO {
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
     public String getPublicId() { return publicId; }
-    public int getBalance() { return balance; }
     public Role getRole() { return role; }
 }
