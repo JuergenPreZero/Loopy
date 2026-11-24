@@ -53,18 +53,36 @@ public class TransactionService {
         User user = userRepository.findByPublicIdForUpdate(request.getPublicId())
                 .orElseThrow(() -> new ResourceNotFoundException("Station ID invalid: " + request.getPublicId()));
 
-        if (request.getAmount() <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero.");
+        boolean hasAmount = request.getAmount() != null;
+        boolean hasWeight = request.getWeight() != null;
+
+        if (!hasAmount && !hasWeight) {
+            throw new IllegalArgumentException("At least one dimension (amount or weight) must be provided.");
         }
 
         RecyclableItem item = RecyclableItem.fromDisplayName(request.getUnitId())
                 .orElseThrow(() -> new IllegalArgumentException("Unknown recyclable item: " + request.getUnitId()));
 
-        int earnedPoints = item.getRewardPoints() * request.getAmount();
+        int earnedPoints = 0;
+
+        if (hasAmount) {
+            if (request.getAmount() <= 0) {
+                throw new IllegalArgumentException("Amount must be greater than zero.");
+            }
+            earnedPoints += item.getRewardPoints() * request.getAmount();
+        }
+
+        if (hasWeight) {
+            if (request.getWeight() <= 0) {
+                throw new IllegalArgumentException("Weight must be greater than zero.");
+            }
+            earnedPoints += (int) Math.round(item.getRewardPoints() * request.getWeight());
+        }
 
         Transaction tx = new Transaction();
         tx.setUser(user);
         tx.setAmount(request.getAmount());
+        tx.setWeight(request.getWeight());
         tx.setValue(earnedPoints);
         tx.setUnitId(item.getDisplayName());
         tx.setType(TransactionType.RECYCLING);

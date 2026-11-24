@@ -48,6 +48,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/transactions/throw-in").permitAll()
+                        .requestMatchers("/api/transactions/verify").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/api/rewards").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/rewards/**").hasRole("ADMIN")

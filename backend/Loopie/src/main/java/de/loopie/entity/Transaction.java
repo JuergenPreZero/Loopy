@@ -2,10 +2,13 @@ package de.loopie.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Check;
+
 import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "transactions")
+@Check(constraints = "amount IS NOT NULL OR weight IS NOT NULL")
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,8 +19,11 @@ public class Transaction {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Integer amount;
+
+    @Column(nullable = true)
+    private Double weight;
 
     @Column(name = "transaction_value", nullable = false)
     private int value;
@@ -49,6 +55,14 @@ public class Transaction {
 
     public Integer getAmount() { return amount; }
     public void setAmount(Integer amount) { this.amount = amount; }
+
+    public Double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
+    }
 
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }

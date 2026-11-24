@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Linking,
+  StyleSheet,
 } from 'react-native';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import {
@@ -17,9 +18,7 @@ import {
 import { useUser } from '../UserContext';
 import { globalStyles, colors } from '../../theme';
 
-
 import BottomSheetModal from '../BottomSheetModal';
-import RecycleProgressCard from '../RecycleProgressCard';
 
 interface HomeScreenProps {
   userId?: string;
@@ -27,12 +26,70 @@ interface HomeScreenProps {
 }
 
 const STORE_ADDRESS = 'Gerberstraße 19, 74072 Heilbronn';
-type ActiveModalType = 'stores' | 'howTo' | 'dosDonts' | null;
+type ActiveModalType = 'stores' | 'howTo' | 'whatToDrop' | 'learnMore' | null;
+type MaterialKey = 'tennis' | 'tshirts' | 'shoes';
+
+interface MaterialGuide {
+  key: MaterialKey;
+  label: string;
+  emoji: string;
+  dos: string[];
+  donts: string[];
+}
+
+const MATERIAL_GUIDES: Record<MaterialKey, MaterialGuide> = {
+  tennis: {
+    key: 'tennis',
+    label: 'Tennisbälle',
+    emoji: '🎾',
+    dos: [
+      'Saubere und trockene Tennisbälle',
+      'Gebrauchte Trainings- und Matchbälle',
+      'Einzeln nacheinander in die Station einwerfen',
+    ],
+    donts: [
+      'Nasse, schlammige oder stark verschmutzte Bälle',
+      'Aufgerissene, geplatzte oder stark beschädigte Bälle',
+      'Andere Ballarten (z. B. Golf-, Tischtennis- oder Fußbälle)',
+    ],
+  },
+  tshirts: {
+    key: 'tshirts',
+    label: 'T-Shirts',
+    emoji: '👕',
+    dos: [
+      'Saubere und trockene T-Shirts aller Art',
+      'Baumwoll- und Funktionsshirts (auch mit Aufdruck)',
+      'Einzeln und unverknotet in das Fach legen',
+    ],
+    donts: [
+      'Nasse, feuchte oder verschimmelte Kleidung',
+      'Stark verschmutzte oder mit Chemikalien/Öl behaftete Stoffe',
+      'Jacken, Hosen, Pullover, Socken oder Unterwäsche',
+    ],
+  },
+  shoes: {
+    key: 'shoes',
+    label: 'Laufschuhe',
+    emoji: '👟',
+    dos: [
+      'Saubere und trockene Laufschuhe',
+      'Immer paarweise an den Schnürsenkeln zusammengebunden',
+      'Gut erhaltene sowie abgelaufene Sportschuhe',
+    ],
+    donts: [
+      'Einzelschuhe ohne passendes Gegenstück',
+      'Nasse, stark verschlammte oder schimmelige Schuhe',
+      'Straßenschuhe, Stiefel, Absätze oder Sandalen',
+    ],
+  },
+};
 
 export default function HomeScreen({ setActivePage }: HomeScreenProps) {
   const { user, totalQuantity, earnedCoins, isInitialLoading, refreshData } = useUser();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeModal, setActiveModal] = useState<ActiveModalType>(null);
+  const [selectedMaterial, setSelectedMaterial] = useState<MaterialKey>('tennis');
 
   useEffect(() => {
     refreshData();
@@ -70,6 +127,7 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
 
   const firstName = user?.firstName || 'du';
   const co2Saved = (totalQuantity * 0.42).toFixed(1);
+  const currentGuide = MATERIAL_GUIDES[selectedMaterial];
 
   return (
     <ScrollView
@@ -85,7 +143,7 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
     >
       {/* Begrüßung */}
       <View style={{ marginBottom: 16 }}>
-        <Text style={globalStyles.title}>Hey {firstName}, </Text>
+        <Text style={globalStyles.title}>Hey {firstName},</Text>
         <Text style={globalStyles.subtitle}>Schön, dass du wieder da bist!</Text>
       </View>
 
@@ -113,11 +171,8 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
         </View>
       </View>
 
-      {/* Fortschrittsbalken-Komponente */}
-      <RecycleProgressCard totalQuantity={totalQuantity} />
-
       {/* Quick Actions */}
-      <View style={globalStyles.row}>
+      <View style={[globalStyles.row, { marginBottom: 16 }]}>
         <TouchableOpacity
           style={[globalStyles.button, { flex: 1, marginRight: 6, flexDirection: 'row', justifyContent: 'center' }]}
           onPress={() => setActiveModal('stores')}
@@ -137,41 +192,47 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
         </TouchableOpacity>
       </View>
 
-      {/* Info-Kacheln nebeneinander */}
-      <View style={[globalStyles.row, { marginTop: 16 }]}>
+      {/* 3 Info-Kacheln nebeneinander */}
+      <View style={styles.infoGrid}>
         <TouchableOpacity
-          style={[globalStyles.card, { flex: 1, marginRight: 6, marginBottom: 0, padding: 14 }]}
-          activeOpacity={0.7}
+          style={[globalStyles.card, styles.homeInfoCard]}
+          activeOpacity={0.75}
           onPress={() => setActiveModal('howTo')}
         >
-          <View style={[globalStyles.iconPlaceholder, { backgroundColor: '#EFF6FF', marginBottom: 10 }]}>
+          <View style={[styles.smallEmojiBox, { backgroundColor: '#FEF9C3' }]}>
             <Text style={{ fontSize: 20 }}>💡</Text>
           </View>
-          <Text style={[globalStyles.title, { fontSize: 15, marginBottom: 2 }]}>Anleitung</Text>
-          <Text style={[globalStyles.subtitle, { fontSize: 12, marginBottom: 0 }]} numberOfLines={2}>
-            So läuft der Einwurf in 3 Schritten ab
-          </Text>
+          <Text style={styles.homeInfoTitle} numberOfLines={1}>So funktioniert’s</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[globalStyles.card, { flex: 1, marginLeft: 6, marginBottom: 0, padding: 14 }]}
-          activeOpacity={0.7}
-          onPress={() => setActiveModal('dosDonts')}
+          style={[globalStyles.card, styles.homeInfoCard]}
+          activeOpacity={0.75}
+          onPress={() => setActiveModal('whatToDrop')}
         >
-          <View style={[globalStyles.iconPlaceholder, { backgroundColor: '#F0FDF4', marginBottom: 10 }]}>
-            <Text style={{ fontSize: 20 }}>📋</Text>
+          <View style={[styles.smallEmojiBox, { backgroundColor: '#E0F2FE' }]}>
+            <Text style={{ fontSize: 20 }}>📦</Text>
           </View>
-          <Text style={[globalStyles.title, { fontSize: 15, marginBottom: 2 }]}>Do's & Don'ts</Text>
-          <Text style={[globalStyles.subtitle, { fontSize: 12, marginBottom: 0 }]} numberOfLines={2}>
-            Erlaubte Artikel & Sortier-Regeln
-          </Text>
+          <Text style={styles.homeInfoTitle} numberOfLines={1}>Was einwerfen?</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[globalStyles.card, styles.homeInfoCard]}
+          activeOpacity={0.75}
+          onPress={() => setActiveModal('learnMore')}
+        >
+          <View style={[styles.smallEmojiBox, { backgroundColor: '#EDE9FE' }]}>
+            <Text style={{ fontSize: 20 }}>❓</Text>
+          </View>
+          <Text style={styles.homeInfoTitle} numberOfLines={1}>Mehr erfahren</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Modal 1: Stationen */}
       <BottomSheetModal
         visible={activeModal === 'stores'}
         onClose={() => setActiveModal(null)}
-        title="Stores"
+        title="Stationen"
         subtitle="Hier kannst du deine Wertstoffe abgeben."
       >
         <View style={globalStyles.mapContainer}>
@@ -200,7 +261,7 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
               <Text style={[globalStyles.tagText, { color: colors.tagTennisText }]}>🎾 Tennisbälle</Text>
             </View>
             <View style={[globalStyles.tag, { backgroundColor: colors.tagTextileBg }]}>
-              <Text style={[globalStyles.tagText, { color: colors.tagTextileText }]}>👕 Textilien</Text>
+              <Text style={[globalStyles.tagText, { color: colors.tagTextileText }]}>👕 T-Shirts</Text>
             </View>
             <View style={[globalStyles.tag, { backgroundColor: colors.tagShoesBg }]}>
               <Text style={[globalStyles.tagText, { color: colors.tagShoesText }]}>👟 Laufschuhe</Text>
@@ -218,6 +279,7 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
         <View style={{ height: 24 }} />
       </BottomSheetModal>
 
+      {/* Modal 2: So funktioniert’s */}
       <BottomSheetModal
         visible={activeModal === 'howTo'}
         onClose={() => setActiveModal(null)}
@@ -226,10 +288,12 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
       >
         <View style={[globalStyles.card, { marginBottom: 12 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-              <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 14 }}>1</Text>
+            <View style={styles.stepCircle}>
+              <Text style={styles.stepCircleText}>1</Text>
             </View>
-            <Text style={[globalStyles.title, { fontSize: 16, marginBottom: 0 }]}>QR-Code an der Station scannen</Text>
+            <Text style={[globalStyles.title, { fontSize: 16, marginBottom: 0 }]}>
+              QR-Code an der Station scannen
+            </Text>
           </View>
           <Text style={[globalStyles.subtitle, { fontSize: 14, lineHeight: 20, marginBottom: 0 }]}>
             Öffne deinen persönlichen QR-Code unten in der Leiste und halte ihn vor den Sensor der Loopy-Station. Die Einwurfklappe entriegelt sich sofort.
@@ -238,67 +302,262 @@ export default function HomeScreen({ setActivePage }: HomeScreenProps) {
 
         <View style={[globalStyles.card, { marginBottom: 12 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-              <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 14 }}>2</Text>
+            <View style={styles.stepCircle}>
+              <Text style={styles.stepCircleText}>2</Text>
             </View>
-            <Text style={[globalStyles.title, { fontSize: 16, marginBottom: 0 }]}>Artikel einwerfen</Text>
+            <Text style={[globalStyles.title, { fontSize: 16, marginBottom: 0 }]}>
+              Artikel einwerfen
+            </Text>
           </View>
           <Text style={[globalStyles.subtitle, { fontSize: 14, lineHeight: 20, marginBottom: 0 }]}>
             Wirf deine Wertstoffe einzeln ein. Die integrierte Sensorik erkennt das Material automatisch und zählt deine Artikel in Echtzeit mit.
           </Text>
         </View>
 
-        <View style={[globalStyles.card, { marginBottom: 0 }]}>
+        <View style={[globalStyles.card, { marginBottom: 16 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-              <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 14 }}>3</Text>
+            <View style={styles.stepCircle}>
+              <Text style={styles.stepCircleText}>3</Text>
             </View>
-            <Text style={[globalStyles.title, { fontSize: 16, marginBottom: 0 }]}>ReCoins einlösen & genießen</Text>
+            <Text style={[globalStyles.title, { fontSize: 16, marginBottom: 0 }]}>
+              ReCoins einlösen & genießen
+            </Text>
           </View>
           <Text style={[globalStyles.subtitle, { fontSize: 14, lineHeight: 20, marginBottom: 0 }]}>
-            Deine ReCoins werden deinem Konto direkt gutgeschrieben. Löse sie im Shop gegen Backwaren, Smoothies oder Gutscheine bei lokalen Partnern ein.
+            Deine ReCoins werden deinem Konto direkt gutgeschrieben. Löse sie im Shop gegen Backwaren oder Gutscheine bei lokalen Partnern ein.
           </Text>
         </View>
       </BottomSheetModal>
 
+      {/* Modal 3: Was einwerfen? (Abgabe vorbereiten) */}
       <BottomSheetModal
-        visible={activeModal === 'dosDonts'}
+        visible={activeModal === 'whatToDrop'}
         onClose={() => setActiveModal(null)}
-        title="Do's & Don'ts"
-        subtitle="Was gehört in die Loopy-Station?"
+        title="Abgabe vorbereiten"
+        subtitle="Wähle ein Material aus, um zu sehen, was wir annehmen und was du beachten solltest."
       >
-        <View style={{ backgroundColor: '#F0FDF4', borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#BBF7D0' }}>
-          <Text style={{ fontSize: 15, fontWeight: '700', color: '#166534', marginBottom: 12 }}>✓ Das gehört rein (Do's)</Text>
-          <View style={{ marginBottom: 10 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>Tennisbälle</Text>
-            <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Saubere Tennisbälle können hier eingeworfen werden.</Text>
-          </View>
-          <View style={{ marginBottom: 10 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>Laufschuhe</Text>
-            <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Saubere Laufschuhe können hier zusammengebunden eingeworfen werden.</Text>
-          </View>
-          <View>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>T-Shirts</Text>
-            <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Alle Arten von T-Shirts können hier reingeworfen werden.</Text>
-          </View>
+        <View style={styles.tabRow}>
+          {(['tennis', 'tshirts', 'shoes'] as MaterialKey[]).map((key) => {
+            const item = MATERIAL_GUIDES[key];
+            const isActive = selectedMaterial === key;
+            return (
+              <TouchableOpacity
+                key={key}
+                style={[styles.materialTab, isActive && styles.materialTabActive]}
+                activeOpacity={0.8}
+                onPress={() => setSelectedMaterial(key)}
+              >
+                <Text style={[styles.materialTabText, isActive && styles.materialTabTextActive]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        <View style={{ backgroundColor: '#FEF2F2', borderRadius: 16, padding: 16, marginBottom: 0, borderWidth: 1, borderColor: '#FECACA' }}>
-          <Text style={{ fontSize: 15, fontWeight: '700', color: '#991B1B', marginBottom: 12 }}>✕ Das gehört NICHT rein (Don'ts)</Text>
-          <View style={{ marginBottom: 10 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>🚫 Hausmüll, Plastikverpackungen & Dosen</Text>
-            <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Getränkedosen und PET-Flaschen bitte im herkömmlichen Pfandautomaten abgeben.</Text>
+        <View style={styles.materialDetailCard}>
+          <View style={styles.detailHeader}>
+            <Text style={{ fontSize: 22 }}>{currentGuide.emoji}</Text>
+            <Text style={styles.detailCategoryName}>{currentGuide.label}</Text>
           </View>
-          <View style={{ marginBottom: 10 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>🚫 Nasse oder verschimmelte Kleidung</Text>
-            <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Feuchte Textilien beschädigen den gesamten Sammelbehälter und blockieren die Verwertung.</Text>
+
+          <Text style={styles.dosHeading}>DOs</Text>
+          <View style={styles.dosBox}>
+            {currentGuide.dos.map((line, index) => (
+              <Text key={index} style={styles.ruleListText}>
+                • {line}
+              </Text>
+            ))}
           </View>
-          <View>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>🚫 Straßenschuhe, Stiefel & Einzelschuhe</Text>
-            <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Keine Lederschuhe, Absätze oder Winterschuhe einwerfen; Schuhe immer als Paar abgeben.</Text>
+
+          <Text style={styles.dontsHeading}>DON'Ts</Text>
+          <View style={styles.dontsBox}>
+            {currentGuide.donts.map((line, index) => (
+              <Text key={index} style={styles.ruleListText}>
+                • {line}
+              </Text>
+            ))}
           </View>
         </View>
+        <View style={{ height: 16 }} />
+      </BottomSheetModal>
+
+      {/* Modal 4: Mehr erfahren (Platzhalter für How-to Videos) */}
+      <BottomSheetModal
+        visible={activeModal === 'learnMore'}
+        onClose={() => setActiveModal(null)}
+        title="Mehr erfahren"
+        subtitle="How-to Videos und weitere Informationen rund um Loopy."
+      >
+        <View style={styles.videoPlaceholder}>
+        </View>
+        <View style={{ height: 16 }} />
       </BottomSheetModal>
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  infoGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  homeInfoCard: {
+    flex: 1,
+    marginBottom: 0,
+    padding: 12,
+    alignItems: 'center',
+  },
+  smallEmojiBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  homeInfoTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  tabRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  materialTab: {
+    flex: 1,
+    backgroundColor: '#E2E8F0',
+    paddingVertical: 11,
+    paddingHorizontal: 6,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  materialTabActive: {
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    marginBottom: 0,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  materialTabText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
+  materialTabTextActive: {
+    color: colors.text,
+  },
+  materialDetailCard: {
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    borderTopRightRadius: 12,
+    borderTopLeftRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  detailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingBottom: 12,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  detailCategoryName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  dosHeading: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#166534',
+    marginBottom: 6,
+  },
+  dosBox: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  dontsHeading: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#991B1B',
+    marginBottom: 6,
+  },
+  dontsBox: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  ruleListText: {
+    fontSize: 13,
+    color: '#1F2937',
+    lineHeight: 19,
+    marginBottom: 4,
+  },
+  stepCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  stepCircleText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  videoPlaceholder: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  playIcon: {
+    fontSize: 18,
+    color: colors.primary,
+    marginLeft: 3,
+  },
+  videoPlaceholderText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+});
