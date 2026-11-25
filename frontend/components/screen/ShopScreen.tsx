@@ -8,6 +8,7 @@ import {
   ScrollView,
   Modal,
   TextInput,
+  StyleSheet,
 } from 'react-native';
 import RewardCard from '../RewardCard';
 import {
@@ -17,8 +18,22 @@ import {
   deleteReward,
   Reward,
 } from '../../api';
-import { globalStyles, colors } from '../../theme';
 import { useUser } from '../UserContext';
+
+const LOCAL_COLORS = {
+  primary: '#2563EB',
+  text: '#0F172A',
+  textMuted: '#64748B',
+  surface: '#FFFFFF',
+  border: '#E2E8F0',
+  bg: '#F8FAFC',
+  successBg: '#F0FDF4',
+  successBorder: '#BBF7D0',
+  successText: '#166534',
+  errorBg: '#FEF2F2',
+  errorBorder: '#FECACA',
+  errorText: '#991B1B',
+};
 
 const MAX_PER_ITEM = 5;
 const MAX_TOTAL_ITEMS = 10;
@@ -93,13 +108,11 @@ export default function ShopScreen() {
     setSuccessMessage(null);
     const currentQty = cart[id] || 0;
 
-    // 1. Limit pro Prämie prüfen
     if (currentQty >= MAX_PER_ITEM) {
       triggerError(`Maximal ${MAX_PER_ITEM} Stück pro Prämie erlaubt.`);
       return;
     }
 
-    // 2. Limit für gesamten Warenkorb prüfen
     if (cartTotalItems >= MAX_TOTAL_ITEMS) {
       triggerError(`Dein Warenkorb darf maximal ${MAX_TOTAL_ITEMS} Artikel enthalten.`);
       return;
@@ -198,46 +211,43 @@ export default function ShopScreen() {
 
   if (isLoading) {
     return (
-      <View style={globalStyles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={LOCAL_COLORS.primary} />
       </View>
     );
   }
 
   return (
-    <View style={globalStyles.screen}>
-      <Text style={globalStyles.title}>Prämien & Partner</Text>
-      <Text style={globalStyles.subtitle}>Löse deine ReCoins gegen Gutscheine und Prämien ein.</Text>
+    <View style={styles.screen}>
+      <Text style={styles.title}>Prämien & Partner</Text>
+      <Text style={styles.subtitle}>Löse deine ReCoins gegen Gutscheine und Prämien ein.</Text>
 
-      {/* Rotes Fehler-Banner */}
       {errorMessage && (
-        <View style={globalStyles.bannerError}>
-          <Text style={globalStyles.bannerErrorText}>✕ {errorMessage}</Text>
+        <View style={styles.bannerError}>
+          <Text style={styles.bannerErrorText}>✕ {errorMessage}</Text>
         </View>
       )}
 
-      {/* Grünes Erfolgs-Banner */}
       {successMessage && (
-        <View style={globalStyles.bannerSuccess}>
-          <Text style={globalStyles.bannerSuccessText}>✓ {successMessage}</Text>
+        <View style={styles.bannerSuccess}>
+          <Text style={styles.bannerSuccessText}>✓ {successMessage}</Text>
         </View>
       )}
 
       {userRole === 'ADMIN' && (
         <TouchableOpacity
-          style={[globalStyles.button, { marginBottom: 14 }]}
+          style={[styles.button, styles.addBtn]}
           onPress={() => setModalVisible(true)}
         >
-          <Text style={globalStyles.buttonText}>+ Prämie hinzufügen</Text>
+          <Text style={styles.buttonText}>+ Prämie hinzufügen</Text>
         </TouchableOpacity>
       )}
 
-      {/* Partner-Filter */}
-      <View style={{ marginBottom: 14 }}>
+      <View style={styles.filterWrapper}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ flexDirection: 'row', alignItems: 'center' }}
+          contentContainerStyle={styles.filterScrollContent}
         >
           {partnerList.map((partner) => {
             const isSelected = selectedPartner === partner;
@@ -245,21 +255,19 @@ export default function ShopScreen() {
               <TouchableOpacity
                 key={partner}
                 style={[
-                  globalStyles.card,
-                  globalStyles.filterPill,
+                  styles.filterPill,
                   {
-                    backgroundColor: isSelected ? colors.primary : colors.surface,
-                    borderColor: isSelected ? colors.primary : colors.border,
+                    backgroundColor: isSelected ? LOCAL_COLORS.primary : LOCAL_COLORS.surface,
+                    borderColor: isSelected ? LOCAL_COLORS.primary : LOCAL_COLORS.border,
                   },
                 ]}
                 onPress={() => setSelectedPartner(partner)}
               >
                 <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: '600',
-                    color: isSelected ? '#FFFFFF' : colors.text,
-                  }}
+                  style={[
+                    styles.filterPillText,
+                    { color: isSelected ? '#FFFFFF' : LOCAL_COLORS.text },
+                  ]}
                 >
                   {partner}
                 </Text>
@@ -270,8 +278,8 @@ export default function ShopScreen() {
       </View>
 
       {filteredRewards.length === 0 ? (
-        <View style={globalStyles.center}>
-          <Text style={globalStyles.subtitle}>Keine Artikel für diesen Shop gefunden.</Text>
+        <View style={styles.center}>
+          <Text style={styles.subtitle}>Keine Artikel für diesen Shop gefunden.</Text>
         </View>
       ) : (
         <FlatList
@@ -299,81 +307,76 @@ export default function ShopScreen() {
         />
       )}
 
-      {/* Checkout-Bar */}
       {cartTotalItems > 0 && (
-        <View style={globalStyles.checkoutBar}>
+        <View style={styles.checkoutBar}>
           <View>
-            <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 16 }}>
+            <Text style={styles.checkoutTitle}>
               {cartTotalItems} Artikel gewählt
             </Text>
-            <Text style={{ color: '#FFF', fontSize: 14, opacity: 0.9 }}>
+            <Text style={styles.checkoutSubtitle}>
               Gesamt: {cartTotalCost} ReCoins
             </Text>
           </View>
           <TouchableOpacity
-            style={[globalStyles.checkoutBtn, !hasEnoughBalance && { opacity: 0.4 }]}
+            style={[styles.checkoutBtn, !hasEnoughBalance && styles.checkoutBtnDisabled]}
             onPress={handleCheckout}
             disabled={isCheckingOut || !hasEnoughBalance}
           >
             {isCheckingOut ? (
-              <ActivityIndicator size="small" color={colors.primary} />
+              <ActivityIndicator size="small" color={LOCAL_COLORS.primary} />
             ) : (
-              <Text style={globalStyles.checkoutBtnText}>Einlösen</Text>
+              <Text style={styles.checkoutBtnText}>Einlösen</Text>
             )}
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Admin Modal */}
       <Modal visible={modalVisible} transparent animationType="fade">
-        <View style={globalStyles.modalBackground}>
-          <View style={[globalStyles.card, { width: '100%', maxWidth: 400 }]}>
-            <Text style={globalStyles.title}>Neue Prämie anlegen</Text>
-            <Text style={globalStyles.subtitle}>Erstelle ein neues Partner-Angebot</Text>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalCard}>
+            <Text style={styles.title}>Neue Prämie anlegen</Text>
+            <Text style={styles.subtitle}>Erstelle ein neues Partner-Angebot</Text>
 
             <TextInput
-              style={globalStyles.input}
+              style={styles.input}
               placeholder="Partnername"
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={LOCAL_COLORS.textMuted}
               value={newPartner}
               onChangeText={setNewPartner}
             />
             <TextInput
-              style={globalStyles.input}
+              style={styles.input}
               placeholder="Titel"
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={LOCAL_COLORS.textMuted}
               value={newTitle}
               onChangeText={setNewTitle}
             />
             <TextInput
-              style={globalStyles.input}
+              style={styles.input}
               placeholder="Preis in ReCoins"
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={LOCAL_COLORS.textMuted}
               keyboardType="numeric"
               value={newCost}
               onChangeText={setNewCost}
             />
 
-            <View style={[globalStyles.row, { marginTop: 8 }]}>
+            <View style={styles.modalRow}>
               <TouchableOpacity
-                style={[
-                  globalStyles.button,
-                  { flex: 1, backgroundColor: colors.textMuted, marginRight: 8 },
-                ]}
+                style={[styles.button, styles.modalCancelBtn]}
                 onPress={() => setModalVisible(false)}
                 disabled={isCreating}
               >
-                <Text style={globalStyles.buttonText}>Abbrechen</Text>
+                <Text style={styles.buttonText}>Abbrechen</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[globalStyles.button, { flex: 1 }]}
+                style={[styles.button, styles.modalSaveBtn]}
                 onPress={handleCreateReward}
                 disabled={isCreating}
               >
                 {isCreating ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text style={globalStyles.buttonText}>Speichern</Text>
+                  <Text style={styles.buttonText}>Speichern</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -383,3 +386,172 @@ export default function ShopScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: LOCAL_COLORS.bg,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: LOCAL_COLORS.text,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: LOCAL_COLORS.textMuted,
+    marginBottom: 12,
+  },
+  bannerSuccess: {
+    backgroundColor: LOCAL_COLORS.successBg,
+    borderColor: LOCAL_COLORS.successBorder,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  bannerSuccessText: {
+    color: LOCAL_COLORS.successText,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  bannerError: {
+    backgroundColor: LOCAL_COLORS.errorBg,
+    borderColor: LOCAL_COLORS.errorBorder,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  bannerErrorText: {
+    color: LOCAL_COLORS.errorText,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  button: {
+    backgroundColor: LOCAL_COLORS.primary,
+    borderRadius: 12,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  addBtn: {
+    marginBottom: 14,
+  },
+  filterWrapper: {
+    marginBottom: 14,
+  },
+  filterScrollContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  filterPill: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginRight: 8,
+  },
+  filterPillText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  checkoutBar: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 16,
+    backgroundColor: LOCAL_COLORS.primary,
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  checkoutTitle: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  checkoutSubtitle: {
+    color: '#FFF',
+    fontSize: 14,
+    opacity: 0.9,
+  },
+  checkoutBtn: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    minWidth: 96,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkoutBtnDisabled: {
+    opacity: 0.4,
+  },
+  checkoutBtnText: {
+    color: LOCAL_COLORS.primary,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: LOCAL_COLORS.surface,
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: LOCAL_COLORS.border,
+  },
+  input: {
+    backgroundColor: LOCAL_COLORS.bg,
+    borderWidth: 1,
+    borderColor: LOCAL_COLORS.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: LOCAL_COLORS.text,
+    marginBottom: 12,
+  },
+  modalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    backgroundColor: LOCAL_COLORS.textMuted,
+    marginRight: 8,
+  },
+  modalSaveBtn: {
+    flex: 1,
+  },
+});

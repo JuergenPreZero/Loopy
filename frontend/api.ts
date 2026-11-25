@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://localhost:8080';
+const API_URL = 'https://term-dat-mountain-chancellor.trycloudflare.com';
 const AUTH_BASE_URL = `${API_URL}/api/auth`;
 const USERS_URL = `${API_URL}/api/users`;
 const TRANSACTIONS_URL = `${API_URL}/api/transactions`;
@@ -43,6 +43,7 @@ export interface AuthResponse {
 export interface BackendTransaction {
   id: string | number;
   amount: number;
+  weight: number;
   unitId: string;
   value: number;
   timeStamp?: string;

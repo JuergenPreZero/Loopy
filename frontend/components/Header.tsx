@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StatusBar, StyleSheet } from 'react-native';
 import { useUser } from './UserContext';
-import { colors } from '../theme';
+
+const LOCAL_COLORS = {
+  primary: '#2563EB',
+  primaryLight: '#EFF6FF',
+  primaryBorder: '#BFDBFE',
+  surface: '#FFFFFF',
+  border: '#E2E8F0',
+};
 
 export default function Header() {
   const { balance } = useUser();
@@ -23,7 +30,7 @@ export default function Header() {
 
   return (
     <>
-      <StatusBar backgroundColor={colors.surface} barStyle="dark-content" />
+      <StatusBar backgroundColor={LOCAL_COLORS.surface} barStyle="dark-content" />
       <View style={styles.headerContainer}>
         <View style={styles.pillBadge}>
           <Text style={styles.badgeText}>
@@ -44,30 +51,30 @@ export default function Header() {
 
 const styles = StyleSheet.create({
   headerContainer: {
-    backgroundColor: colors.surface,
+    backgroundColor: LOCAL_COLORS.surface,
     paddingVertical: 12,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: LOCAL_COLORS.border,
   },
   pillBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primaryLight,
+    backgroundColor: LOCAL_COLORS.primaryLight,
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.primaryBorder,
+    borderColor: LOCAL_COLORS.primaryBorder,
   },
   liveDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.primary,
+    backgroundColor: LOCAL_COLORS.primary,
     marginRight: 8,
   },
   coinEmoji: {
@@ -77,7 +84,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.primary,
-    fontVariant: ['tabular-nums'], 
+    color: LOCAL_COLORS.primary,
+    fontVariant: ['tabular-nums'],
   },
 });

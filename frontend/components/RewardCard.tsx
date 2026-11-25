@@ -11,7 +11,16 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { Delete02Icon, Image01Icon } from '@hugeicons/core-free-icons';
 import { Reward } from '../api';
-import { colors } from '../theme';
+
+const LOCAL_COLORS = {
+  primary: '#2563EB',
+  primaryLight: '#EFF6FF',
+  primaryBorder: '#BFDBFE',
+  danger: '#DC2626',
+  textMuted: '#64748B',
+  background: '#F8FAFC',
+  border: '#E2E8F0',
+};
 
 interface RewardCardProps {
   reward: Reward;
@@ -71,7 +80,7 @@ export default function RewardCard({
         ) : (
           <View style={styles.placeholderContainer}>
             <View style={styles.iconCircle}>
-              <HugeiconsIcon icon={Image01Icon} size={28} color={colors.textMuted} />
+              <HugeiconsIcon icon={Image01Icon} size={28} color={LOCAL_COLORS.textMuted} />
             </View>
             <Text style={styles.placeholderText}>Kein Bild verfügbar</Text>
           </View>
@@ -88,9 +97,9 @@ export default function RewardCard({
             activeOpacity={0.8}
           >
             {isDeleting ? (
-              <ActivityIndicator size="small" color={colors.danger} />
+              <ActivityIndicator size="small" color={LOCAL_COLORS.danger} />
             ) : (
-              <HugeiconsIcon icon={Delete02Icon} size={18} color={colors.danger} />
+              <HugeiconsIcon icon={Delete02Icon} size={18} color={LOCAL_COLORS.danger} />
             )}
           </TouchableOpacity>
         )}
@@ -141,7 +150,7 @@ export default function RewardCard({
             <Text
               style={[
                 styles.circleBtnText,
-                !canIncrement && { color: colors.textMuted },
+                !canIncrement && styles.circleBtnTextDisabled,
               ]}
             >
               +
@@ -195,7 +204,7 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.textMuted,
+    color: LOCAL_COLORS.textMuted,
     letterSpacing: 0.4,
   },
   floatingAdminBtn: {
@@ -229,7 +238,7 @@ const styles = StyleSheet.create({
   partnerText: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.primary,
+    color: LOCAL_COLORS.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 2,
@@ -240,18 +249,18 @@ const styles = StyleSheet.create({
     color: '#111827',
   },
   costBadge: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: LOCAL_COLORS.primaryLight,
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.primaryBorder,
+    borderColor: LOCAL_COLORS.primaryBorder,
     marginRight: 10,
   },
   costText: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.primary,
+    color: LOCAL_COLORS.primary,
   },
   actionCol: {
     flexDirection: 'row',
@@ -262,20 +271,23 @@ const styles = StyleSheet.create({
     height: 34,
     borderRadius: 17,
     borderWidth: 1.5,
-    borderColor: colors.primary,
+    borderColor: LOCAL_COLORS.primary,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   circleBtnDisabled: {
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: LOCAL_COLORS.border,
+    backgroundColor: LOCAL_COLORS.background,
   },
   circleBtnText: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.primary,
+    color: LOCAL_COLORS.primary,
     lineHeight: 20,
+  },
+  circleBtnTextDisabled: {
+    color: LOCAL_COLORS.textMuted,
   },
   qtyText: {
     fontSize: 15,

@@ -3,12 +3,19 @@ import { View, Text, StyleSheet } from 'react-native';
 
 export interface TransactionProps {
   itemType: string;
-  amount: number;
+  amount?: number | null;
+  weight?: number | null;
   value: number;
   date?: string;
 }
 
-export default function TransactionItem({ itemType, amount, value, date }: TransactionProps) {
+export default function TransactionItem({
+  itemType,
+  amount,
+  weight,
+  value,
+  date,
+}: TransactionProps) {
   const isPositive = value >= 0;
 
   const formatShortDate = (rawDate?: string) => {
@@ -30,22 +37,51 @@ export default function TransactionItem({ itemType, amount, value, date }: Trans
     }
   };
 
+  const formatWeight = (kg: number) => {
+    if (kg < 1) {
+      const grams = Math.round(kg * 1000);
+      return `${grams.toLocaleString('de-DE')} g`;
+    }
+    return `${kg.toLocaleString('de-DE', { maximumFractionDigits: 2 })} kg`;
+  };
+
+    const renderSubtitle = () => {
+    if (!isPositive) {
+      const count = amount ?? 1;
+      return `${count} ${count === 1 ? 'Prämie' : 'Prämien'} eingelöst`;
+    }
+
+    const hasWeight = weight !== null && weight !== undefined;
+    const hasAmount = amount !== null && amount !== undefined;
+
+    if (hasWeight && hasAmount) {
+      return `${amount} Stück (${formatWeight(weight)}) abgegeben`;
+    }
+    if (hasWeight) {
+      return `${formatWeight(weight)} abgegeben`;
+    }
+    if (hasAmount) {
+      return `${amount} Stück abgegeben`;
+    }
+
+    return 'Abgegeben';
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.leftCol}>
-        <Text style={styles.itemName}>
-          {itemType}
-        </Text>
-        <Text style={styles.itemAmount}>
-          {isPositive
-            ? `${amount} Stück abgegeben`
-            : `${amount} ${amount === 1 ? 'Prämie' : 'Prämien'} eingelöst`}
-        </Text>
+        <Text style={styles.itemName}>{itemType}</Text>
+        <Text style={styles.itemAmount}>{renderSubtitle()}</Text>
         {date ? <Text style={styles.itemDate}>{formatShortDate(date)}</Text> : null}
       </View>
 
       <View style={styles.rightCol}>
-        <Text style={[styles.totalValue, isPositive ? styles.positiveValue : styles.negativeValue]}>
+        <Text
+          style={[
+            styles.totalValue,
+            isPositive ? styles.positiveValue : styles.negativeValue,
+          ]}
+        >
           {isPositive ? `+${value}` : value} ReCoins
         </Text>
       </View>
@@ -72,7 +108,7 @@ const styles = StyleSheet.create({
   },
   leftCol: {
     flex: 1,
-    marginRight: 18, 
+    marginRight: 18,
   },
   itemName: {
     fontSize: 16,
@@ -91,7 +127,7 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
   rightCol: {
-    flexShrink: 0, 
+    flexShrink: 0,
     alignItems: 'flex-end',
     justifyContent: 'flex-start',
     paddingTop: 1,

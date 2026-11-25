@@ -6,12 +6,28 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   ScrollView,
+  StyleSheet,
 } from 'react-native';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { Edit02Icon, PencilEdit02Icon } from '@hugeicons/core-free-icons';
 import { getUserData, deleteAccount, updateUserProfile } from '../../api';
 import { validator } from '../auth/UserValidator';
-import { globalStyles, colors } from '../../theme';
+
+const LOCAL_COLORS = {
+  primary: '#2563EB',
+  danger: '#DC2626',
+  text: '#0F172A',
+  textMuted: '#64748B',
+  surface: '#FFFFFF',
+  border: '#E2E8F0',
+  bg: '#F8FAFC',
+  successBg: '#F0FDF4',
+  successBorder: '#BBF7D0',
+  successText: '#166534',
+  errorBg: '#FEF2F2',
+  errorBorder: '#FECACA',
+  errorText: '#991B1B',
+};
 
 const EditIconComponent = Edit02Icon || PencilEdit02Icon;
 
@@ -148,29 +164,29 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
   if (isLoading) {
     return (
-      <View style={globalStyles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={LOCAL_COLORS.primary} />
       </View>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={globalStyles.scrollContent}>
-      <Text style={globalStyles.title}>Profil</Text>
-      <Text style={globalStyles.subtitle}>Verwalte deine Kontodaten</Text>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.scrollContent}>
+      <Text style={styles.title}>Profil</Text>
+      <Text style={styles.subtitle}>Verwalte deine Kontodaten</Text>
 
-      <View style={globalStyles.card}>
-        <Text style={[globalStyles.subtitle, { marginBottom: 6 }]}>Vorname</Text>
-        <View style={globalStyles.row}>
+      <View style={styles.card}>
+        <Text style={styles.fieldLabel}>Vorname</Text>
+        <View style={styles.row}>
           <TextInput
             ref={firstNameRef}
-            style={[globalStyles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
+            style={styles.fieldInput}
             value={firstName}
             onChangeText={(val) => handleFieldChange(setFirstName, val)}
           />
           <TouchableOpacity onPress={() => firstNameRef.current?.focus()}>
             {EditIconComponent ? (
-              <HugeiconsIcon icon={EditIconComponent} size={20} color={colors.primary} />
+              <HugeiconsIcon icon={EditIconComponent} size={20} color={LOCAL_COLORS.primary} />
             ) : (
               <Text>✏️</Text>
             )}
@@ -178,18 +194,18 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         </View>
       </View>
 
-      <View style={globalStyles.card}>
-        <Text style={[globalStyles.subtitle, { marginBottom: 6 }]}>Nachname</Text>
-        <View style={globalStyles.row}>
+      <View style={styles.card}>
+        <Text style={styles.fieldLabel}>Nachname</Text>
+        <View style={styles.row}>
           <TextInput
             ref={lastNameRef}
-            style={[globalStyles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
+            style={styles.fieldInput}
             value={lastName}
             onChangeText={(val) => handleFieldChange(setLastName, val)}
           />
           <TouchableOpacity onPress={() => lastNameRef.current?.focus()}>
             {EditIconComponent ? (
-              <HugeiconsIcon icon={EditIconComponent} size={20} color={colors.primary} />
+              <HugeiconsIcon icon={EditIconComponent} size={20} color={LOCAL_COLORS.primary} />
             ) : (
               <Text>✏️</Text>
             )}
@@ -197,12 +213,12 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         </View>
       </View>
 
-      <View style={globalStyles.card}>
-        <Text style={[globalStyles.subtitle, { marginBottom: 6 }]}>E-Mail</Text>
-        <View style={globalStyles.row}>
+      <View style={styles.card}>
+        <Text style={styles.fieldLabel}>E-Mail</Text>
+        <View style={styles.row}>
           <TextInput
             ref={emailRef}
-            style={[globalStyles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
+            style={styles.fieldInput}
             value={email}
             onChangeText={(val) => handleFieldChange(setEmail, val)}
             keyboardType="email-address"
@@ -210,7 +226,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
           />
           <TouchableOpacity onPress={() => emailRef.current?.focus()}>
             {EditIconComponent ? (
-              <HugeiconsIcon icon={EditIconComponent} size={20} color={colors.primary} />
+              <HugeiconsIcon icon={EditIconComponent} size={20} color={LOCAL_COLORS.primary} />
             ) : (
               <Text>✏️</Text>
             )}
@@ -218,88 +234,69 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         </View>
       </View>
 
-      <View style={globalStyles.card}>
-        <Text style={[globalStyles.subtitle, { marginBottom: 6 }]}>Nutzer-ID</Text>
-        <Text style={{ fontSize: 16, color: colors.text, fontWeight: '500' }}>
-          {publicId || '–'}
-        </Text>
+      <View style={styles.card}>
+        <Text style={styles.fieldLabel}>Nutzer-ID</Text>
+        <Text style={styles.publicIdText}>{publicId || '–'}</Text>
       </View>
 
-      {/* Feedback-Banner aus theme.ts */}
       {successMessage && (
-        <View style={globalStyles.bannerSuccess}>
-          <Text style={globalStyles.bannerSuccessText}>✓ {successMessage}</Text>
+        <View style={styles.bannerSuccess}>
+          <Text style={styles.bannerSuccessText}>✓ {successMessage}</Text>
         </View>
       )}
 
       {errorMessage && (
-        <View style={globalStyles.bannerError}>
-          <Text style={globalStyles.bannerErrorText}>✕ {errorMessage}</Text>
+        <View style={styles.bannerError}>
+          <Text style={styles.bannerErrorText}>✕ {errorMessage}</Text>
         </View>
       )}
 
       {hasChanges && (
         <TouchableOpacity
-          style={[globalStyles.button, { marginTop: 8 }]}
+          style={[styles.button, styles.saveBtn]}
           onPress={handleSave}
           disabled={isSaving}
         >
           {isSaving ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={globalStyles.buttonText}>Änderungen speichern</Text>
+            <Text style={styles.buttonText}>Änderungen speichern</Text>
           )}
         </TouchableOpacity>
       )}
 
       <TouchableOpacity
-        style={[globalStyles.buttonDanger, { marginTop: 16 }]}
+        style={[styles.button, styles.logoutBtn]}
         onPress={onLogout}
       >
-        <Text style={globalStyles.buttonText}>Abmelden</Text>
+        <Text style={styles.buttonText}>Abmelden</Text>
       </TouchableOpacity>
 
-      <View style={{ marginTop: 20, marginBottom: 32 }}>
+      <View style={styles.deleteSection}>
         {!showConfirm ? (
           <TouchableOpacity
-            style={{ alignItems: 'center', padding: 10 }}
+            style={styles.deleteTrigger}
             onPress={() => setShowConfirm(true)}
           >
-            <Text style={{ color: colors.textMuted, fontSize: 14, textDecorationLine: 'underline' }}>
-              Konto löschen
-            </Text>
+            <Text style={styles.deleteTriggerText}>Konto löschen</Text>
           </TouchableOpacity>
         ) : (
-          <View style={[globalStyles.card, { marginTop: 8 }]}>
-            <Text style={[globalStyles.subtitle, { textAlign: 'center', marginBottom: 12 }]}>
+          <View style={[styles.card, styles.confirmCard]}>
+            <Text style={styles.confirmText}>
               Möchtest du dein Konto und alle Daten unwiderruflich löschen?
             </Text>
-            <View style={globalStyles.row}>
+            <View style={styles.row}>
               <TouchableOpacity
-                style={[
-                  globalStyles.buttonSecondary,
-                  { flex: 1, marginRight: 8, paddingVertical: 10 },
-                ]}
+                style={[styles.button, styles.confirmDeleteBtn]}
                 onPress={confirmAndDelete}
               >
-                <Text style={[globalStyles.buttonText, { fontSize: 14 }]}>Ja, löschen</Text>
+                <Text style={styles.confirmBtnText}>Ja, löschen</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  globalStyles.button,
-                  {
-                    flex: 1,
-                    backgroundColor: colors.surface,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    paddingVertical: 10,
-                  },
-                ]}
+                style={[styles.button, styles.cancelBtn]}
                 onPress={() => setShowConfirm(false)}
               >
-                <Text style={[globalStyles.buttonText, { color: colors.text, fontSize: 14 }]}>
-                  Abbrechen
-                </Text>
+                <Text style={styles.cancelBtnText}>Abbrechen</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -308,3 +305,159 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: LOCAL_COLORS.bg,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: LOCAL_COLORS.text,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: LOCAL_COLORS.textMuted,
+    marginBottom: 16,
+  },
+  card: {
+    backgroundColor: LOCAL_COLORS.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: LOCAL_COLORS.border,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    color: LOCAL_COLORS.textMuted,
+    marginBottom: 6,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fieldInput: {
+    flex: 1,
+    backgroundColor: LOCAL_COLORS.bg,
+    borderWidth: 1,
+    borderColor: LOCAL_COLORS.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: LOCAL_COLORS.text,
+    marginBottom: 0,
+    marginRight: 8,
+  },
+  publicIdText: {
+    fontSize: 16,
+    color: LOCAL_COLORS.text,
+    fontWeight: '500',
+  },
+  bannerSuccess: {
+    backgroundColor: LOCAL_COLORS.successBg,
+    borderColor: LOCAL_COLORS.successBorder,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  bannerSuccessText: {
+    color: LOCAL_COLORS.successText,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  bannerError: {
+    backgroundColor: LOCAL_COLORS.errorBg,
+    borderColor: LOCAL_COLORS.errorBorder,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  bannerErrorText: {
+    color: LOCAL_COLORS.errorText,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  button: {
+    borderRadius: 12,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  saveBtn: {
+    backgroundColor: LOCAL_COLORS.primary,
+    marginTop: 8,
+  },
+  logoutBtn: {
+    backgroundColor: LOCAL_COLORS.danger,
+    marginTop: 16,
+  },
+  deleteSection: {
+    marginTop: 20,
+    marginBottom: 32,
+  },
+  deleteTrigger: {
+    alignItems: 'center',
+    padding: 10,
+  },
+  deleteTriggerText: {
+    color: LOCAL_COLORS.textMuted,
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  confirmCard: {
+    marginTop: 8,
+  },
+  confirmText: {
+    fontSize: 14,
+    color: LOCAL_COLORS.textMuted,
+    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  confirmDeleteBtn: {
+    flex: 1,
+    backgroundColor: LOCAL_COLORS.textMuted,
+    marginRight: 8,
+    paddingVertical: 10,
+  },
+  confirmBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cancelBtn: {
+    flex: 1,
+    backgroundColor: LOCAL_COLORS.surface,
+    borderWidth: 1,
+    borderColor: LOCAL_COLORS.border,
+    paddingVertical: 10,
+  },
+  cancelBtnText: {
+    color: LOCAL_COLORS.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+});

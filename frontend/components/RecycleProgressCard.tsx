@@ -1,6 +1,13 @@
 import React from 'react';
-import { View, Text } from 'react-native';
-import { globalStyles, colors } from '../theme';
+import { View, Text, StyleSheet } from 'react-native';
+
+const LOCAL_COLORS = {
+  primary: '#2563EB',
+  text: '#0F172A',
+  textMuted: '#64748B',
+  surface: '#FFFFFF',
+  border: '#E2E8F0',
+};
 
 interface RecycleProgressCardProps {
   totalQuantity: number;
@@ -15,40 +22,65 @@ export default function RecycleProgressCard({
   const remainingItems = Math.max(0, targetItems - totalQuantity);
 
   return (
-    <View style={[globalStyles.card, { marginBottom: 16 }]}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+    <View style={styles.card}>
+      <View style={styles.headerRow}>
         <View>
-          <Text style={[globalStyles.title, { fontSize: 15, marginBottom: 2 }]}>
-            Recycle-Profi
-          </Text>
-          <Text style={{ fontSize: 13, color: colors.textMuted }}>
+          <Text style={styles.title}>Recycle-Profi</Text>
+          <Text style={styles.subtitle}>
             {remainingItems > 0
               ? `Noch ${remainingItems} Artikel bis zum Meilenstein`
               : 'Meilenstein erreicht!'}
           </Text>
         </View>
-        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.primary }}>
-          {progress}%
-        </Text>
+        <Text style={styles.percentText}>{progress}%</Text>
       </View>
 
-      <View
-        style={{
-          height: 8,
-          backgroundColor: colors.border,
-          borderRadius: 4,
-          overflow: 'hidden',
-        }}
-      >
-        <View
-          style={{
-            height: '100%',
-            width: `${progress}%`,
-            backgroundColor: colors.primary,
-            borderRadius: 4,
-          }}
-        />
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressFill, { width: `${progress}%` }]} />
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: LOCAL_COLORS.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: LOCAL_COLORS.border,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: LOCAL_COLORS.text,
+    marginBottom: 2,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: LOCAL_COLORS.textMuted,
+  },
+  percentText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: LOCAL_COLORS.primary,
+  },
+  progressTrack: {
+    height: 8,
+    backgroundColor: LOCAL_COLORS.border,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: LOCAL_COLORS.primary,
+    borderRadius: 4,
+  },
+});

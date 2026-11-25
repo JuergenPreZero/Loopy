@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFonts } from 'expo-font';
 
 import Header from './components/Header';
 import Navbar from './components/Navbar'; 
@@ -19,6 +20,18 @@ import { setAuthToken } from './api';
 const TOKEN_STORAGE_KEY = '@loopie_jwt_token';
 
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts({
+    'outfit-thin': require('./assets/fonts/Outfit-Thin.ttf'),
+    'outfit-extralight': require('./assets/fonts/Outfit-ExtraLight.ttf'),
+    'outfit-light': require('./assets/fonts/Outfit-Light.ttf'),
+    'outfit-regular': require('./assets/fonts/Outfit-Regular.ttf'),
+    'outfit-medium': require('./assets/fonts/Outfit-Medium.ttf'),
+    'outfit-semibold': require('./assets/fonts/Outfit-SemiBold.ttf'),
+    'outfit-bold': require('./assets/fonts/Outfit-Bold.ttf'),
+    'outfit-extrabold': require('./assets/fonts/Outfit-ExtraBold.ttf'),
+    'outfit-black': require('./assets/fonts/Outfit-Black.ttf'),
+  });
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [authPage, setAuthPage] = useState<'landing' | 'login' | 'register'>('landing');
   const [activePage, setActivePage] = useState<number>(1);
@@ -65,6 +78,14 @@ export default function App() {
       console.error('Fehler beim Abmelden:', error);
     }
   };
+
+  if (!fontsLoaded && !fontError) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2563EB" />
+      </View>
+    );
+  }
 
   if (isLoading) {
     return (
